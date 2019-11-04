@@ -1,6 +1,6 @@
 import sys, os, shutil
-os.chdir(r'D:\Documents\Python_Scripts\Parameter Database')
-sys.path.append(r'D:\Documents\Python_Scripts\Parameter Database')
+os.chdir(r'D:\Documents\GitHub\proeven_verzameling')
+sys.path.append(r'D:\Documents\GitHub\proeven_verzameling')
 from qgis.utils import *
 import qgis_backend as qb
 import pandas as pd
@@ -72,7 +72,7 @@ if df_trx is not None:
             stat_df.columns.name = 'ea ='
             df_bbn_stat_dict[key] = stat_df
     
-os.chdir(r'D:\Documents\Python_Scripts\Parameter Database')
+#os.chdir(r'D:\Documents\GitHub\proeven_verzameling')
 
 output_file = 'TRX_Example.xlsx'
 

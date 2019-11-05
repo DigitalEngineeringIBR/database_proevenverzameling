@@ -13,6 +13,7 @@ def fetch (query):
 
         cur = dbcon.cursor()
         cur.execute(query)
+        #print('SQL QUERY: \n' + query )
         fetched = cur.fetchall()
         description = cur.description
         return fetched, description
@@ -138,7 +139,6 @@ def get_trx( gtm_ids, proef_type = ('CD') ):
                     query = 'SELECT * FROM trx WHERE proef_type IN ' + proef_type_str + \
                         ' AND gtm_id IN ' + values_str
                     fetched, description = fetch(query)
-                    print('SQL QUERY: \n' + query )
                     if( len( fetched ) > 0 ):
                         trx_df = pd.DataFrame(fetched)
                         colnames = [desc[0] for desc in description]
@@ -183,7 +183,6 @@ def get_trx_result( gtm_ids ):
                 values = tuple( gtm_ids )
                 values_str = '(' + ','.join(str(i) for i in values).strip(',') + ')'
                 query = 'SELECT * FROM trx_result WHERE gtm_id IN ' + values_str  
-                print('SQL QUERY: \n' + query )  
                 fetched, description = fetch(query)
                 if( len( fetched ) > 0 ):
                     trx_result_df = pd.DataFrame(fetched)
@@ -212,7 +211,6 @@ def get_trx_dlp( gtm_ids ):
                 values_str = '(' + ','.join(str(i) for i in values).strip(',') + ')'
                 query = 'SELECT * FROM trx_dlp WHERE gtm_id IN ' + values_str    
                 fetched, description = fetch(query)
-                print('SQL QUERY: \n' + query )
                 if( len( fetched ) > 0 ):
                     trx_dlp = pd.DataFrame(fetched)
                     colnames = [desc[0] for desc in description]
@@ -240,7 +238,6 @@ def get_trx_dlp_result( gtm_ids ):
                 values_str = '(' + ','.join(str(i) for i in values).strip(',') + ')'
                 query = 'SELECT * FROM trx_dlp_result WHERE gtm_id IN ' + values_str  
                 fetched, description = fetch(query)
-                print('SQL QUERY: \n' + query )  
                 if( len( fetched ) > 0 ):
                     trx_dlp_result = pd.DataFrame(fetched)
                     colnames = [desc[0] for desc in description]
@@ -265,9 +262,8 @@ def select_on_ea( trx_result, ea = 2 ):
      else:
          raise TypeError('No pandas dataframe was supplied')
 
-def get_average_per_ea( df_trx_result ):
+def get_average_per_ea( df_trx_result, ea_list = [0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2,3,4,5,6,7,8,9,10,11,12,13,14,15] ):
     if isinstance( df_trx_result, pd.DataFrame ):
-        ea_list = [0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
         mean_coh = []
         mean_fi = []
         nstd_coh = []
@@ -305,6 +301,8 @@ def get_least_squares( df_trx_dlp_result, name = 'TRX_DLP', ea = 2, make_plot = 
     def func(a,b,x):
         return a*x + b
     
+    res_y = y - func(a,b,x)
+
     E = np.sum((y - func(a,b,x))**2) # Abs. Squared Error
     eps = np.mean((y - func(a,b,x))**2/y**2) # Normalised/Relative Error average for all points
     E_per_n = E/N # Abs.Squared Error per n
@@ -317,11 +315,12 @@ def get_least_squares( df_trx_dlp_result, name = 'TRX_DLP', ea = 2, make_plot = 
         colors = ('red', 'green', 'blue')
         dlp_label = ('dlp 1', 'dlp 2', 'dlp 3')
 
-        fig = plt.figure(figsize=(14,7))
-        ax = fig.add_subplot(1,2,1)
+        fig = plt.figure(figsize=(14,7), )
+        ax = fig.add_subplot(1,3,1)
         
-        ax2 = fig.add_subplot(2,2,2)
-        ax3 = fig.add_subplot(2,2,4 )
+        ax2 = fig.add_subplot(2,3,2)
+        ax3 = fig.add_subplot(2,3,5)
+        ax4 = fig.add_subplot(1,3,3)
         ## Plotten verschillende deelproeven
         for data, color, lab in zip(data_colors, colors, dlp_label):
             x2, y2 = data
@@ -337,7 +336,9 @@ def get_least_squares( df_trx_dlp_result, name = 'TRX_DLP', ea = 2, make_plot = 
         ax.set_title(name)
         ax.legend(loc=2)
         ax.set_xlabel('\u03C3_n Normaalspanning')
-        ax.set_ylabel('\u03A4 Schuifspanning ')
+        ax.set_ylabel('\u03A4 Schuifspanning')
+        ax.set_xlim(xmin=0)
+        ax.set_ylim(ymin=0)
 
         ax2.hist(x,round(N/4))
         ax3.hist(y,round(N/4))
@@ -347,6 +348,12 @@ def get_least_squares( df_trx_dlp_result, name = 'TRX_DLP', ea = 2, make_plot = 
         ax2.set_xlabel('\u03C3_n als (\u03C3_3 + \u03C3_2)/2')
         ax3.set_xlabel('\u03A4 als (\u03C3_3 - \u03C3_1)/2')
 
+        ax4.scatter(x,res_y)
+        ax4.set_title('Residual Plot')
+        ax4.set_ylabel('Residual Schuifspanning \u03A4_r')
+        ax4.set_xlabel('\u03C3_n Normaalspanning')
+
+        plt.tight_layout()
         plt.show()
     return round(fi,3), round(coh,1), round(E), round(E_per_n,1), round(eps*100,1), N
 
@@ -361,7 +368,6 @@ def get_sdp( gtm_ids ):
                 values_str = '(' + ','.join(str(i) for i in values).strip(',') + ')'
                 query = 'SELECT * FROM sdp WHERE gtm_id IN ' + values_str  
                 fetched, description = fetch(query)
-                print('SQL QUERY: \n' + query )  
                 if( len( fetched ) > 0 ):
                     sdp_df = pd.DataFrame(fetched)
                     colnames = [desc[0] for desc in description]
@@ -390,7 +396,6 @@ def get_sdp_result( gtm_ids ):
                 values_str = '(' + ','.join(str(i) for i in values).strip(',') + ')'
                 query = 'SELECT * FROM sdp_result WHERE gtm_id IN ' + values_str  
                 fetched, description = fetch(query)
-                print('SQL QUERY: \n' + query )  
                 if( len( fetched ) > 0 ):
                     sdp_result_df = pd.DataFrame(fetched)
                     colnames = [desc[0] for desc in description]

@@ -38,64 +38,69 @@ if df_sdp is not None:
 
 df_trx = qb.get_trx(df_gm.gtm_id, proef_type = proef_types)
 df_trx = qb.select_on_vg(df_trx, volume_gewicht_selectie[1], volume_gewicht_selectie[0])
+
 if df_trx is not None:
-    
     df_trx_results = qb.get_trx_result(df_trx.gtm_id)
-    
     df_trx_dlp = qb.get_trx_dlp(df_trx.gtm_id)
     df_trx_dlp_result = qb.get_trx_dlp_result(df_trx.gtm_id)
 
     df_dict.update({'BIS_TRX_Proeven':df_trx, 'BIS_TRX_Results':df_trx_results, 'BIS_TRX_DLP':df_trx_dlp, 'BIS_TRX_DLP_Results': df_trx_dlp_result})
     
-    minvg, maxvg = min(df_trx.volumegewicht_nat), max(df_trx.volumegewicht_nat)
-    N = round(len(df_trx.index)/5) + 1
-    cutoff = 1
-    if (maxvg-minvg)/N > cutoff:
-        Vg_linspace = np.linspace(minvg, maxvg, N)
-    else:
-        Vg_linspace = np.linspace(minvg, maxvg, round((maxvg-minvg)/cutoff))
-    Vgmax = Vg_linspace[1:]
-    Vgmin = Vg_linspace[0:-1]
-
-    df_vg_stat_dict = {}
-    for vg_max, vg_min in zip(Vgmax, Vgmin):
-        gtm_ids = qb.select_on_vg(df_trx, Vg_max = vg_max, Vg_min = vg_min, soort = 'nat')['gtm_id']
-        if len(gtm_ids) > 0:
-            df_trx_results_temp = qb.get_trx_result(gtm_ids)
-            stat_df = qb.get_average_per_ea(df_trx_results_temp, rek_selectie)
-            stat_df.index.name = key = 'Vg: ' + str(round(vg_min,1)) + '-' + str(round(vg_max, 1)) + ' kN/m3'
-            stat_df.columns.name = 'ea ='
-            df_vg_stat_dict[key] = stat_df
-    
-    df_dict_lst_sqrs = {}
-    for ea in  rek_selectie:
-        ls_list = []
+    # Statistieken
+    if len(df_trx.index) > 1: # je kan geen statistieken doen op 1 proef
+        minvg, maxvg = min(df_trx.volumegewicht_nat), max(df_trx.volumegewicht_nat)
+        N = round(len(df_trx.index)/5) + 1
+        cutoff = 1
+        if (maxvg-minvg)/N > cutoff:
+            Vg_linspace = np.linspace(minvg, maxvg, N)
+        else:
+            Vg_linspace = np.linspace(minvg, maxvg, round((maxvg-minvg)/cutoff))
+        Vgmax = Vg_linspace[1:]
+        Vgmin = Vg_linspace[0:-1]
+        print(Vgmax, Vgmin)
+        df_vg_stat_dict = {}
         for vg_max, vg_min in zip(Vgmax, Vgmin):
             gtm_ids = qb.select_on_vg(df_trx, Vg_max = vg_max, Vg_min = vg_min, soort = 'nat')['gtm_id']
-            key = 'Vg: ' + str(round(vg_min,1)) + '-' + str(round(vg_max, 1)) + ' kN/m3'
             if len(gtm_ids) > 0:
-                fi, coh, E, E_per_n, eps, N = qb.get_least_squares(
-                    qb.get_trx_dlp_result(gtm_ids), 
-                    ea = ea, 
-                    name = 'Least Squares Analysis, ea: ' + str(ea) + '\n' + key,
-                    make_plot = True
-                    )
-                ls_list.append(pd.DataFrame(index = [key], data = [[vg_min, vg_max, fi, coh, E, E_per_n, eps, N]],\
-                    columns=['min(Vg)', 'max(Vg)','fi','coh','Abs. Sq. Err.','Abs. Sq. Err./N','Mean Rel. Err. %','N']))
-        df_ls_stat = pd.concat(ls_list)
-        df_ls_stat.index.name = 'ea: ' + str(ea)
-        df_dict_lst_sqrs.update({ str(ea) + r'% rek least squares fit':df_ls_stat})
+                df_trx_results_temp = qb.get_trx_result(gtm_ids)
+                stat_df = qb.get_average_per_ea(df_trx_results_temp, rek_selectie)
+                stat_df.index.name = key = 'Vg: ' + str(round(vg_min,1)) + '-' + str(round(vg_max, 1)) + ' kN/m3'
+                stat_df.columns.name = 'ea ='
+                df_vg_stat_dict[key] = stat_df
+        
+        df_dict_lst_sqrs = {}
+        for ea in  rek_selectie:
+            ls_list = []
+            for vg_max, vg_min in zip(Vgmax, Vgmin):
+                gtm_ids = qb.select_on_vg(df_trx, Vg_max = vg_max, Vg_min = vg_min, soort = 'nat')['gtm_id']
+                key = 'Vg: ' + str(round(vg_min,1)) + '-' + str(round(vg_max, 1)) + ' kN/m3'
+                if len(gtm_ids) > 0:
+                    fi, coh, E, E_per_n, eps, N = qb.get_least_squares(
+                        qb.get_trx_dlp_result(gtm_ids), 
+                        ea = ea, 
+                        name = 'Least Squares Analysis, ea: ' + str(ea) + '\n' + key,
+                        make_plot = True
+                        )
+                    ls_list.append(pd.DataFrame(index = [key], data = [[vg_min, vg_max, fi, coh, E, E_per_n, eps, N]],\
+                        columns=['min(Vg)', 'max(Vg)','fi','coh','Abs. Sq. Err.','Abs. Sq. Err./N','Mean Rel. Err. %','N']))
+                    print(ls_list)
+            if len(ls_list)>0:
+                df_ls_stat = pd.concat(ls_list)
+                df_ls_stat.index.name = 'ea: ' + str(ea)
+                df_dict_lst_sqrs.update({ str(ea) + r'% rek least squares fit':df_ls_stat})
 
-    df_bbn_stat_dict = {}
-    for bbn_code in pd.unique(df_trx.bbn_kode):
-        gtm_ids = df_trx[df_trx.bbn_kode == bbn_code].gtm_id
-        if len(gtm_ids > 0):
-            df_trx_results_temp = qb.get_trx_result(gtm_ids)
-            stat_df = qb.get_average_per_ea(df_trx_results_temp, rek_selectie)
-            stat_df.index.name = key = bbn_code
-            stat_df.columns.name = 'ea ='
-            df_bbn_stat_dict[key] = stat_df
+        df_bbn_stat_dict = {}
+        for bbn_code in pd.unique(df_trx.bbn_kode):
+            gtm_ids = df_trx[df_trx.bbn_kode == bbn_code].gtm_id
+            if len(gtm_ids > 0):
+                df_trx_results_temp = qb.get_trx_result(gtm_ids)
+                stat_df = qb.get_average_per_ea(df_trx_results_temp, rek_selectie)
+                stat_df.index.name = key = bbn_code
+                stat_df.columns.name = 'ea ='
+                df_bbn_stat_dict[key] = stat_df
 
+#Make a copy of an excelsheet that already has the two important NEN 9997 tables in it
+#Could be skipped but pd.ExcelWriter(..., mode = 'a') needs to be put on a write/overwrite mode = 'w' i think
 shutil.copyfile('NEN 9997.xlsx', output_file)
 
 with pd.ExcelWriter(output_file,mode='a') as writer: #writer in append mode so that the NEN tables are kept

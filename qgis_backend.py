@@ -13,7 +13,7 @@ def fetch (query):
 
         cur = dbcon.cursor()
         cur.execute(query)
-        #print('SQL QUERY: \n' + query )
+        print('SQL QUERY: \n' + query )
         fetched = cur.fetchall()
         description = cur.description
         return fetched, description
@@ -23,7 +23,7 @@ def get_loc_ids(QgisLayer):
     features = QgisLayer.selectedFeatures()
 
     if len(features) > 0:
-        print(str(len(features)) + ' were selected')
+        print(str(len(features)) + ' points were selected')
         for f in features:
             try:
                 loc_ids.append(f.attribute('loc_id'))
@@ -47,7 +47,6 @@ def get_meetpunten( loc_ids ):
                 query = 'SELECT * FROM graf_loc_aanduidingen '\
                     + 'INNER JOIN meetpunten ON meetpunten.mpt_id = graf_loc_aanduidingen.loc_id '\
                     + 'WHERE graf_loc_aanduidingen.loc_id IN ' + values_str
-                print('SQL QUERY:\n' + query)
                 fetched, description = fetch(query)
 
                 if (0 < len(fetched)):
@@ -102,7 +101,6 @@ def get_geotech_monsters( bor_ids ):
                 values_str = '(' + ','.join(str(i) for i in values).strip(',') + ')'
                 query = 'SELECT * FROM geotech_monsters WHERE bor_id IN ' + values_str
                 fetched, description = fetch(query)
-                print('SQL QUERY:\n' + query )
                 if( len( fetched ) > 0 ):
                     g_mon_df = pd.DataFrame( fetched )
                     colnames = [ desc[0] for desc in description ]
@@ -427,7 +425,6 @@ def join_trx_with_trx_results( gtm_ids, proef_type = 'CD' ):
                     + 'AND trx.trx_volgnr = trx_result.trx_volgnr '\
                     + 'WHERE proef_type = \'' + proef_type + '\' AND trx.gtm_id IN ' + values_str
                 fetched, description = fetch(query)
-                print('SQL QUERY: ' + query )
                 if( len( fetched ) > 0 ):
                     trx_df = pd.DataFrame(fetched)
                     colnames = [desc[0] for desc in description]

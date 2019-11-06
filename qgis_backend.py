@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import psycopg2 as psy
 import matplotlib.pyplot as plt
+import matplotlib.offsetbox as offsetbox
 
 def fetch (query):
     with psy.connect(
@@ -298,39 +299,48 @@ def get_least_squares( df_trx_dlp_result, name = 'TRX_DLP', ea = 2, make_plot = 
 
     def func(a,b,x):
         return a*x + b
-    
-    res_y = y - func(a,b,x)
 
-    E = np.sum((y - func(a,b,x))**2) # Abs. Squared Error
-    eps = np.mean((y - func(a,b,x))**2/y**2) # Normalised/Relative Error average for all points
-    E_per_n = E/N # Abs.Squared Error per n
+    y_res = y - func(a,b,x)
+
+    E = np.sum(y_res**2) # Abs. Squared Error
+    E_per_n = E/N # Mean Squared Error 
+    eps = np.mean(y_res**2/y**2) # Normalised/Relative Error average for all points
     ### Einde Least Squares fitting
 
     
     if make_plot:
         dlp1, dlp2, dlp3 = df[(df.deelproef_nummer == 1)], df[(df.deelproef_nummer == 2)], df[(df.deelproef_nummer == 3)]
-        data_colors = ((dlp1.p, dlp1.q), (dlp2.p, dlp2.q), (dlp3.p, dlp3.q))
+        data_colors = ((dlp1.p, dlp1.q, dlp1.gtm_id), (dlp2.p, dlp2.q, dlp2.gtm_id), (dlp3.p, dlp3.q, dlp3.gtm_id))
         colors = ('red', 'green', 'blue')
         dlp_label = ('dlp 1', 'dlp 2', 'dlp 3')
 
-        fig = plt.figure(figsize=(14,7), )
-        ax = fig.add_subplot(1,3,1)
-        
-        ax2 = fig.add_subplot(2,3,2)
-        ax3 = fig.add_subplot(2,3,5)
-        ax4 = fig.add_subplot(1,3,3)
+        fig = plt.figure(figsize=(14,7))
+        gs = fig.add_gridspec(2,3,width_ratios = [2,1,2])
+        ax = fig.add_subplot(gs[0:,0])
+        ax2 = fig.add_subplot(gs[0,1])
+        ax3 = fig.add_subplot(gs[1,1])
+        ax4 = fig.add_subplot(gs[0:,2])
         ## Plotten verschillende deelproeven
         for data, color, lab in zip(data_colors, colors, dlp_label):
-            x2, y2 = data
+            x2, y2, gtm_ids = data
+            y_res = y2 - func(a,b,x2)
             ax.scatter(x2, y2, alpha=0.8, c=color, edgecolors='none', s=30, label=lab)
+            ax4.scatter(x2, y_res, alpha=0.8, c=color, edgecolors='none', s=30, label=lab)
+            for i in x2.index:
+                if y_res[i]**2 > 3*E_per_n:
+                    ax4.annotate(gtm_ids[i], xy=(x2[i], y_res[i]), xycoords='data')
         
         ax.plot([min(x), max(x)], [func(a,b,min(x)), func(a,b,max(x))], c='black', label='least squares fit')
-        ax.text((max(x)-min(x))/2, min(y)+0.1*y_m, 'Eq: \u03A4 = \u03C3*tan(' + str(round(fi,3)) + ') + ' + str(round(b,2)) \
-            + '\n' + 'Abs Squared Error: ' + str(round(E,1))\
-            + '\n' + 'Abs Squared Error/N: ' + str(round(E_per_n,2))\
-            + '\n' + 'Abs Error/N: ' + str(round(np.sqrt(E_per_n),2))\
-            + '\n' + 'Mean Rel Error: ' + str(round(eps*100, 2)) + '%'\
-            + '\n' + 'N: ' + str(N))
+        text = 'Eq: \u03A4 = \u03C3 * tan( ' + str(round(fi,3)) + ' ) + ' + str(round(b,2)) \
+            + '\n' + 'Squared Error: ' + str(round(E,1))\
+            + '\n' + 'Mean Squared Error: ' + str(round(E_per_n,2))\
+            + '\n' + 'Mean Error: ' + str(round(np.sqrt(E_per_n),2))\
+            + '\n' + 'Mean Rel Error: ' + str(round(eps*100, 2)) + ' %'\
+            + '\n' + 'N: ' + str(N)
+        at = offsetbox.AnchoredText(text, loc='lower right', frameon=True)
+        at.patch.set_boxstyle("round,pad=0.,rounding_size=0.2")
+        ax.add_artist(at)
+        
         ax.set_title(name)
         ax.legend(loc=2)
         ax.set_xlabel('\u03C3_n Normaalspanning')
@@ -343,10 +353,9 @@ def get_least_squares( df_trx_dlp_result, name = 'TRX_DLP', ea = 2, make_plot = 
         ax2.set_title('Histogrammen van \u03C3_n en \u03A4')
         ax2.set_ylabel('N')
         ax3.set_ylabel('N')
-        ax2.set_xlabel('\u03C3_n als (\u03C3_3 + \u03C3_2)/2')
-        ax3.set_xlabel('\u03A4 als (\u03C3_3 - \u03C3_1)/2')
+        ax2.set_xlabel('\u03C3_n als ( \u03C3_3 + \u03C3_2 )/2')
+        ax3.set_xlabel('\u03A4 als ( \u03C3_3 - \u03C3_1 )/2')
 
-        ax4.scatter(x,res_y)
         ax4.set_title('Residual Plot')
         ax4.set_ylabel('Residual Schuifspanning \u03A4_r')
         ax4.set_xlabel('\u03C3_n Normaalspanning')

@@ -1,14 +1,13 @@
 import sys, os, shutil
 os.chdir(r'D:\Documents\GitHub\proeven_verzameling')
 sys.path.append(r'D:\Documents\GitHub\proeven_verzameling')
-from qgis.utils import *
-import qgis_backend as qb
+
 import pandas as pd
 import numpy as np
+import qgis_backend as qb
 
-active_layer = iface.activeLayer()
 
-loc_ids = qb.get_loc_ids(active_layer)
+loc_ids = [143800, 144566, 144584, 142998, 140980, 48565, 160833, 160838, 160847, 160856, 156721, 156724, 156726, 156728, 138341, 138353, 100652, 140976, 143018, 156720, 198019, 210119, 258134, 270183, 270201, 270518, 270520, 270521, 265149, 262493, 285429, 285431, 285434, 285435, 290032, 297470, 297474, 340699, 340703, 48107, 48563, 48566, 91546, 90312, 107300, 100651, 138342, 138343, 144613]
 
 # Inputs:
 # Locatie ids uit QGIS
@@ -20,7 +19,7 @@ loc_ids = qb.get_loc_ids(active_layer)
 hoogte_selectie = [100, -20] # mNAP
 proef_types = ['CU'] # Consolidated Undrained, Unconsolidated Undrained, Consolidated Drained
 volume_gewicht_selectie = [9, 22] # kN/m3
-rek_selectie = [5] # Lijst met rek percentages waar statistieken van gemaakt worden
+rek_selectie = [2] # Lijst met rek percentages waar statistieken van gemaakt worden
 output_file = 'TRX_Example.xlsx'
 
 
@@ -103,7 +102,7 @@ if df_trx is not None:
 #Could be skipped but pd.ExcelWriter(..., mode = 'a') needs to be put on a write/overwrite mode = 'w' i think
 shutil.copyfile('NEN 9997.xlsx', output_file)
 
-with pd.ExcelWriter(output_file,mode='a') as writer: #writer in append mode so that the NEN tables are kept
+with pd.ExcelWriter(output_file,engine='openpyxl',mode='a') as writer: #writer in append mode so that the NEN tables are kept
     for key in df_dict:
         df_dict[key].to_excel(writer, sheet_name = key)
         
@@ -122,4 +121,3 @@ with pd.ExcelWriter(output_file,mode='a') as writer: #writer in append mode so t
             row = row + len(df_dict_lst_sqrs[key].index) + 2
 
 os.startfile(output_file)
-

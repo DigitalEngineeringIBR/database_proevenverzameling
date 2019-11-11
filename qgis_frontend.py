@@ -17,12 +17,13 @@ loc_ids = qb.get_loc_ids(active_layer)
 # Volume gewicht voor triaxiaal proeven Vgmin Vgmax
 # Rek ea voor de LST-squares voor triaxiaal proeven: [2,5] or [2]
 # Output file/dir: 'D:\documents\Proeven-Selectie.xlsx'
-hoogte_selectie = [100, -20] # mNAP
+hoogte_selectie = [100, -10] # mNAP
 proef_types = ['CU'] # Consolidated Undrained, Unconsolidated Undrained, Consolidated Drained
 volume_gewicht_selectie = [9, 22] # kN/m3
-rek_selectie = [5] # Lijst met rek percentages waar statistieken van gemaakt worden
+rek_selectie = [2] # Lijst met rek percentages waar statistieken van gemaakt worden
 output_file = 'TRX_Example.xlsx'
-
+show_plot = True
+save_plot = False
 
 df_meetp = qb.get_meetpunten(loc_ids)
 df_geod = qb.get_geo_dossiers( df_meetp.gds_id )
@@ -37,9 +38,9 @@ if df_sdp is not None:
     df_dict.update({'BIS_SDP_Proeven':df_sdp, 'BIS_SDP_Resultaten':df_sdp_result})
 
 df_trx = qb.get_trx(df_gm_filt_on_z.gtm_id, proef_type = proef_types)
-df_trx = qb.select_on_vg(df_trx, volume_gewicht_selectie[1], volume_gewicht_selectie[0])
 
 if df_trx is not None:
+    df_trx = qb.select_on_vg(df_trx, volume_gewicht_selectie[1], volume_gewicht_selectie[0])
     df_trx_results = qb.get_trx_result(df_trx.gtm_id)
     df_trx_dlp = qb.get_trx_dlp(df_trx.gtm_id)
     df_trx_dlp_result = qb.get_trx_dlp_result(df_trx.gtm_id)
@@ -57,7 +58,6 @@ if df_trx is not None:
             Vg_linspace = np.linspace(minvg, maxvg, round((maxvg-minvg)/cutoff))
         Vgmax = Vg_linspace[1:]
         Vgmin = Vg_linspace[0:-1]
-        print(Vgmax, Vgmin)
         df_vg_stat_dict = {}
         for vg_max, vg_min in zip(Vgmax, Vgmin):
             gtm_ids = qb.select_on_vg(df_trx, Vg_max = vg_max, Vg_min = vg_min, soort = 'nat')['gtm_id']
@@ -79,11 +79,10 @@ if df_trx is not None:
                         qb.get_trx_dlp_result(gtm_ids), 
                         ea = ea, 
                         name = 'Least Squares Analysis, ea: ' + str(ea) + '\n' + key,
-                        make_plot = True
+                        show_plot = show_plot, save_plot = save_plot
                         )
                     ls_list.append(pd.DataFrame(index = [key], data = [[vg_min, vg_max, fi, coh, E, E_per_n, eps, N]],\
                         columns=['min(Vg)', 'max(Vg)','fi','coh','Abs. Sq. Err.','Abs. Sq. Err./N','Mean Rel. Err. %','N']))
-                    print(ls_list)
             if len(ls_list)>0:
                 df_ls_stat = pd.concat(ls_list)
                 df_ls_stat.index.name = 'ea: ' + str(ea)
@@ -103,7 +102,7 @@ if df_trx is not None:
 #Could be skipped but pd.ExcelWriter(..., mode = 'a') needs to be put on a write/overwrite mode = 'w' i think
 shutil.copyfile('NEN 9997.xlsx', output_file)
 
-with pd.ExcelWriter(output_file,mode='a') as writer: #writer in append mode so that the NEN tables are kept
+with pd.ExcelWriter(output_file,engine='openpyxl',mode='a') as writer: #writer in append mode so that the NEN tables are kept
     for key in df_dict:
         df_dict[key].to_excel(writer, sheet_name = key)
         

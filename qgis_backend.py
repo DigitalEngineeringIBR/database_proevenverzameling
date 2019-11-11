@@ -14,7 +14,7 @@ def fetch (query):
 
         cur = dbcon.cursor()
         cur.execute(query)
-        print('SQL QUERY: \n' + query )
+        #print('SQL QUERY: \n' + query )
         fetched = cur.fetchall()
         description = cur.description
         return fetched, description
@@ -76,7 +76,6 @@ def get_geo_dossiers(gds_ids):
                 values = tuple( gds_ids )
                 values_str = '(' + ','.join( str(i) for i in values ).strip(',') + ')'
                 query = 'SELECT * FROM geo_dossiers WHERE gds_id IN ' + values_str
-                print('SQL QUERY:\n' + query)
                 fetched, description = fetch(query)
                 if ( 0 < len( fetched )):
                     geod_df = pd.DataFrame(fetched)
@@ -282,7 +281,7 @@ def get_average_per_ea( df_trx_result, ea_list = [0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1
     else:
         raise TypeError('No pandas dataframe was supplied.')
 
-def get_least_squares( df_trx_dlp_result, name = 'TRX_DLP', ea = 2, make_plot = True ):
+def get_least_squares( df_trx_dlp_result, name = 'TRX_DLP', ea = 2, show_plot = True, save_plot = False ):
     df = df_trx_dlp_result[df_trx_dlp_result.ea == ea]
     data_full = (df.p, df.q)
     ### Begin Least Squares fitting van een 'linear regression'
@@ -294,8 +293,10 @@ def get_least_squares( df_trx_dlp_result, name = 'TRX_DLP', ea = 2, make_plot = 
     yx_quadm = np.sum(x*y)/N
 
     a = (yx_quadm - y_m*x_m)/(x_quadm - x_m**2) # Hellings Coefficient
-    b = coh =  y_m - a*x_m   # Start Coefficent/cohesie
-    fi = np.arctan(a) # fi
+    b = y_m - a*x_m   # Start Coefficent/cohesie
+    alpha = np.arctan(a) # fi
+    fi = np.arcsin(a)
+    coh = b/np.cos(fi)
 
     def func(a,b,x):
         return a*x + b
@@ -308,7 +309,7 @@ def get_least_squares( df_trx_dlp_result, name = 'TRX_DLP', ea = 2, make_plot = 
     ### Einde Least Squares fitting
 
     
-    if make_plot:
+    if show_plot or save_plot:
         dlp1, dlp2, dlp3 = df[(df.deelproef_nummer == 1)], df[(df.deelproef_nummer == 2)], df[(df.deelproef_nummer == 3)]
         data_colors = ((dlp1.p, dlp1.q, dlp1.gtm_id), (dlp2.p, dlp2.q, dlp2.gtm_id), (dlp3.p, dlp3.q, dlp3.gtm_id))
         colors = ('red', 'green', 'blue')
@@ -319,8 +320,9 @@ def get_least_squares( df_trx_dlp_result, name = 'TRX_DLP', ea = 2, make_plot = 
         ax = fig.add_subplot(gs[0:,0])
         ax2 = fig.add_subplot(gs[0,1])
         ax3 = fig.add_subplot(gs[1,1])
-        ax4 = fig.add_subplot(gs[0:,2])
+        ax4 = fig.add_subplot(gs[0:,2], sharex=ax)
         ## Plotten verschillende deelproeven
+        txt_annot = False
         for data, color, lab in zip(data_colors, colors, dlp_label):
             x2, y2, gtm_ids = data
             y_res = y2 - func(a,b,x2)
@@ -328,10 +330,12 @@ def get_least_squares( df_trx_dlp_result, name = 'TRX_DLP', ea = 2, make_plot = 
             ax4.scatter(x2, y_res, alpha=0.8, c=color, edgecolors='none', s=30, label=lab)
             for i in x2.index:
                 if y_res[i]**2 > 3*E_per_n:
-                    ax4.annotate(gtm_ids[i], xy=(x2[i], y_res[i]), xycoords='data')
+                    txt_annot = True
+                    ax4.annotate(gtm_ids[i], xy=(x2[i], y_res[i]), xycoords='data',weight='bold')
         
         ax.plot([min(x), max(x)], [func(a,b,min(x)), func(a,b,max(x))], c='black', label='least squares fit')
-        text = 'Eq: \u03A4 = \u03C3 * tan( ' + str(round(fi,3)) + ' ) + ' + str(round(b,2)) \
+        text = 'Line: \u03A4 = \u03C3 * tan( ' + str(round(alpha,3)) + ' ) + ' + str(round(b,2)) \
+            + '\n' + '\u03B1=' + str(round(alpha,3)) + ', a=' + str(round(b,2)) + ', fi=' + str(round(fi,3)) + ', coh=' + str(round(coh,2)) \
             + '\n' + 'Squared Error: ' + str(round(E,1))\
             + '\n' + 'Mean Squared Error: ' + str(round(E_per_n,2))\
             + '\n' + 'Mean Error: ' + str(round(np.sqrt(E_per_n),2))\
@@ -340,7 +344,11 @@ def get_least_squares( df_trx_dlp_result, name = 'TRX_DLP', ea = 2, make_plot = 
         at = offsetbox.AnchoredText(text, loc='lower right', frameon=True)
         at.patch.set_boxstyle("round,pad=0.,rounding_size=0.2")
         ax.add_artist(at)
-        
+        if txt_annot:
+            at2 = offsetbox.AnchoredText('GTM_ID', loc='upper left', frameon=True, prop=dict(fontweight='bold'))
+            at2.patch.set_boxstyle("round,pad=0.,rounding_size=0.2")
+            ax4.add_artist(at2)
+
         ax.set_title(name)
         ax.legend(loc=2)
         ax.set_xlabel('\u03C3_n Normaalspanning')
@@ -361,8 +369,12 @@ def get_least_squares( df_trx_dlp_result, name = 'TRX_DLP', ea = 2, make_plot = 
         ax4.set_xlabel('\u03C3_n Normaalspanning')
 
         plt.tight_layout()
-        plt.show()
-    return round(fi,3), round(coh,1), round(E), round(E_per_n,1), round(eps*100,1), N
+        if show_plot:
+            plt.show()
+        if save_plot:
+            print('nothingyet')
+            #save the plot in the directory
+        return round(fi,3), round(coh,1), round(E), round(E_per_n,1), round(eps*100,1), N
 
 def get_sdp( gtm_ids ):
     if isinstance(gtm_ids, ( list, tuple, pd.Series ) ):

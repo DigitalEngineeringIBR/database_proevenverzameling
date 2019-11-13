@@ -4,17 +4,28 @@ import psycopg2 as psy
 import matplotlib.pyplot as plt
 import matplotlib.offsetbox as offsetbox
 
-def fetch (query):
+def fetch (query, data):
+    ## Using a PostgreSQL database
     with psy.connect(
         host = "localhost",
         database = "bis",
         user = "postgres",
         password = "admin"
         ) as dbcon:
+    ## Using an Oracle database:
+    # with cora.connect(
+    #   user = "",
+    #   password = "",
+    #   dsn = ""*
+    #    ) as dbcon:
+    ## *Can be a: 
+    ## 1. Oracle Easy Connect string
+    ## 2. Oracle Net Connect Descriptor string
+    ## 3. Net Service Name mapping to connect description
 
         cur = dbcon.cursor()
-        cur.execute(query)
-        #print('SQL QUERY: \n' + query )
+        cur.execute(query, data)
+        # Print('SQL QUERY: \n' + query )
         fetched = cur.fetchall()
         description = cur.description
         return fetched, description
@@ -33,7 +44,7 @@ def get_loc_ids(QgisLayer):
                     'This layer does not contain an attribute called loc_id')
             except:
                 raise IOError(
-                    'Something went wrong in selecting the column \'loc_id\'')
+                    'Something went wrong in selecting the attribute \'loc_id\'')
         return loc_ids
     else:
         raise KeyError('No features were selected in the layer')
@@ -44,11 +55,11 @@ def get_meetpunten( loc_ids ):
             if( all( isinstance(x, int) for x in loc_ids )):
 
                 values = tuple(loc_ids)
-                values_str = '(' + ','.join( str(i) for i in values ).strip(',') + ')'
+                #values_str = '(' + ','.join( str(i) for i in values ).strip(',') + ')'
                 query = 'SELECT * FROM graf_loc_aanduidingen '\
                     + 'INNER JOIN meetpunten ON meetpunten.mpt_id = graf_loc_aanduidingen.loc_id '\
-                    + 'WHERE graf_loc_aanduidingen.loc_id IN ' + values_str
-                fetched, description = fetch(query)
+                    + 'WHERE graf_loc_aanduidingen.loc_id IN %s'
+                fetched, description = fetch(query, (values,))
 
                 if (0 < len(fetched)):
                     meetp_df = pd.DataFrame(fetched)
@@ -60,7 +71,7 @@ def get_meetpunten( loc_ids ):
                     return meetp_df
                 else:
                     raise ValueError(
-                        'These selected geometry points do not contain valid loc_ids: ' + values_str)
+                        'These selected geometry points do not contain valid loc_ids: ' + str(values))
             else:
                 raise TypeError('not all inputs are integers')
         else:
@@ -74,16 +85,16 @@ def get_geo_dossiers(gds_ids):
             if(all(isinstance(x, int) for x in gds_ids)):
 
                 values = tuple( gds_ids )
-                values_str = '(' + ','.join( str(i) for i in values ).strip(',') + ')'
-                query = 'SELECT * FROM geo_dossiers WHERE gds_id IN ' + values_str
-                fetched, description = fetch(query)
+                #values_str = '(' + ','.join( str(i) for i in values ).strip(',') + ')'
+                query = 'SELECT * FROM geo_dossiers WHERE gds_id IN %s'
+                fetched, description = fetch(query, (values,))
                 if ( 0 < len( fetched )):
                     geod_df = pd.DataFrame(fetched)
                     colnames = [ desc[0] for desc in description ]
                     geod_df.columns = colnames
                     return geod_df
                 else:
-                    raise ValueError('The selected gds_ids: ' + values_str + \
+                    raise ValueError('The selected gds_ids: ' + str(values) + \
                     ' do not contain any geodossiers.')
             else:
                 raise TypeError('not all inputs are integers')
@@ -98,9 +109,9 @@ def get_geotech_monsters( bor_ids ):
             if( all( isinstance( x, (int)) for x in bor_ids )):
 
                 values = tuple(bor_ids)
-                values_str = '(' + ','.join(str(i) for i in values).strip(',') + ')'
-                query = 'SELECT * FROM geotech_monsters WHERE bor_id IN ' + values_str
-                fetched, description = fetch(query)
+                #values_str = '(' + ','.join(str(i) for i in values).strip(',') + ')'
+                query = 'SELECT * FROM geotech_monsters WHERE bor_id IN %s'
+                fetched, description = fetch(query, (values,))
                 if( len( fetched ) > 0 ):
                     g_mon_df = pd.DataFrame( fetched )
                     colnames = [ desc[0] for desc in description ]
@@ -108,7 +119,7 @@ def get_geotech_monsters( bor_ids ):
                     g_mon_df['z_coordinaat_laag'] = pd.to_numeric( g_mon_df['z_coordinaat_laag'] )
                     return g_mon_df
                 else:
-                    raise ValueError('These selected boring(en): ' + values_str + \
+                    raise ValueError('These selected boring(en): ' + str(values) + \
                     ' do not contain any triaxiaal proeven.')
             else:
                 raise TypeError('not all inputs are integers')
@@ -131,12 +142,11 @@ def get_trx( gtm_ids, proef_type = ('CD') ):
                 if all( isinstance( x, ( int )) for x in gtm_ids ):
 
                     values = tuple(gtm_ids)
-                    values_str = '(' + ','.join( str( i ) for i in values ).strip(',') + ')'
+                    #values_str = '(' + ','.join( str( i ) for i in values ).strip(',') + ')'
                     proef_type = tuple(proef_type)
-                    proef_type_str = '(\'' + '\',\''.join( str( i ) for i in proef_type ).strip(',\'') + '\')'
-                    query = 'SELECT * FROM trx WHERE proef_type IN ' + proef_type_str + \
-                        ' AND gtm_id IN ' + values_str
-                    fetched, description = fetch(query)
+                    #proef_type_str = '(\'' + '\',\''.join( str( i ) for i in proef_type ).strip(',\'') + '\')'
+                    query = 'SELECT * FROM trx WHERE proef_type IN %s AND gtm_id IN %s'
+                    fetched, description = fetch(query, (proef_type, values))
                     if( len( fetched ) > 0 ):
                         trx_df = pd.DataFrame(fetched)
                         colnames = [desc[0] for desc in description]
@@ -146,8 +156,8 @@ def get_trx( gtm_ids, proef_type = ('CD') ):
                         trx_df.volumegewicht_nat = trx_df.volumegewicht_nat.astype(float)
                         return trx_df
                     else:
-                        print('These selected boring(en): ' + values_str + \
-                            ' do not contain any triaxiaal proeven with proef_type: ' + proef_type_str)
+                        print('These selected boring(en): ' + str(values) + \
+                            ' do not contain any triaxiaal proeven with proef_type: ' + str(proef_type))
                 else:
                     raise TypeError('not all inputs are integers')
             else:
@@ -179,9 +189,9 @@ def get_trx_result( gtm_ids ):
             if all(isinstance(x, (int)) for x in gtm_ids):
 
                 values = tuple( gtm_ids )
-                values_str = '(' + ','.join(str(i) for i in values).strip(',') + ')'
-                query = 'SELECT * FROM trx_result WHERE gtm_id IN ' + values_str  
-                fetched, description = fetch(query)
+                #values_str = '(' + ','.join(str(i) for i in values).strip(',') + ')'
+                query = 'SELECT * FROM trx_result WHERE gtm_id IN %s' 
+                fetched, description = fetch(query, (values,))
                 if( len( fetched ) > 0 ):
                     trx_result_df = pd.DataFrame(fetched)
                     colnames = [desc[0] for desc in description]
@@ -189,7 +199,7 @@ def get_trx_result( gtm_ids ):
                     trx_result_df[['ea','coh','fi']] = trx_result_df[['ea','coh','fi']].apply(pd.to_numeric)
                     return trx_result_df
                 else:
-                    print('These selected boring(en): ' + values_str + \
+                    print('These selected boring(en): ' + str(values) + \
                         ' do not contain any trx_results.')
             else:
                 raise TypeError('Not all inputs are integers')
@@ -206,9 +216,9 @@ def get_trx_dlp( gtm_ids ):
             if all(isinstance(x, (int)) for x in gtm_ids):
             
                 values = tuple( gtm_ids )
-                values_str = '(' + ','.join(str(i) for i in values).strip(',') + ')'
-                query = 'SELECT * FROM trx_dlp WHERE gtm_id IN ' + values_str    
-                fetched, description = fetch(query)
+                #values_str = '(' + ','.join(str(i) for i in values).strip(',') + ')'
+                query = 'SELECT * FROM trx_dlp WHERE gtm_id IN %s' 
+                fetched, description = fetch(query, (values,))
                 if( len( fetched ) > 0 ):
                     trx_dlp = pd.DataFrame(fetched)
                     colnames = [desc[0] for desc in description]
@@ -216,7 +226,7 @@ def get_trx_dlp( gtm_ids ):
                     trx_dlp.loc[:,'eps50':] = trx_dlp.loc[:,'eps50':].apply(pd.to_numeric)
                     return trx_dlp
                 else:
-                    print('These selected geomonsters: ' + values_str + \
+                    print('These selected geomonsters: ' + str(values) + \
                         ' do not contain any trx_dlp.')
             else:
                 raise TypeError('Not all inputs are integers')
@@ -233,9 +243,9 @@ def get_trx_dlp_result( gtm_ids ):
             if all(isinstance(x, (int)) for x in gtm_ids):
 
                 values = tuple( gtm_ids )
-                values_str = '(' + ','.join(str(i) for i in values).strip(',') + ')'
-                query = 'SELECT * FROM trx_dlp_result WHERE gtm_id IN ' + values_str  
-                fetched, description = fetch(query)
+                #values_str = '(' + ','.join(str(i) for i in values).strip(',') + ')'
+                query = 'SELECT * FROM trx_dlp_result WHERE gtm_id IN %s' 
+                fetched, description = fetch(query, (values,))
                 if( len( fetched ) > 0 ):
                     trx_dlp_result = pd.DataFrame(fetched)
                     colnames = [desc[0] for desc in description]
@@ -244,7 +254,7 @@ def get_trx_dlp_result( gtm_ids ):
                     trx_dlp_result.loc[:,'ea':] = trx_dlp_result.loc[:,'ea':].apply(pd.to_numeric)
                     return trx_dlp_result
                 else:
-                    print('These selected boring(en): ' + values_str + \
+                    print('These selected boring(en): ' + str(values) + \
                         ' do not contain any trx_results.')
             else:
                 raise TypeError('Not all inputs are integers')
@@ -384,9 +394,9 @@ def get_sdp( gtm_ids ):
             if all(isinstance(x, (int)) for x in gtm_ids):
             
                 values = tuple( gtm_ids )
-                values_str = '(' + ','.join(str(i) for i in values).strip(',') + ')'
-                query = 'SELECT * FROM sdp WHERE gtm_id IN ' + values_str  
-                fetched, description = fetch(query)
+                #values_str = '(' + ','.join(str(i) for i in values).strip(',') + ')'
+                query = 'SELECT * FROM sdp WHERE gtm_id IN %s'
+                fetched, description = fetch(query, (values,))
                 if( len( fetched ) > 0 ):
                     sdp_df = pd.DataFrame(fetched)
                     colnames = [desc[0] for desc in description]
@@ -395,7 +405,7 @@ def get_sdp( gtm_ids ):
                         sdp_df.loc[:,'volumegewicht_droog':].apply(pd.to_numeric)
                     return sdp_df
                 else:
-                    print('These selected boring(en): ' + values_str + \
+                    print('These selected boring(en): ' + str(values) + \
                         ' do not contain any SDP_Proeven.')
             else:
                 raise TypeError('Not all inputs are integers')
@@ -412,9 +422,9 @@ def get_sdp_result( gtm_ids ):
             if all(isinstance(x, (int)) for x in gtm_ids):
 
                 values = tuple( gtm_ids )
-                values_str = '(' + ','.join(str(i) for i in values).strip(',') + ')'
-                query = 'SELECT * FROM sdp_result WHERE gtm_id IN ' + values_str  
-                fetched, description = fetch(query)
+                #values_str = '(' + ','.join(str(i) for i in values).strip(',') + ')'
+                query = 'SELECT * FROM sdp_result WHERE gtm_id IN %s'
+                fetched, description = fetch(query, (values,))
                 if( len( fetched ) > 0 ):
                     sdp_result_df = pd.DataFrame(fetched)
                     colnames = [desc[0] for desc in description]
@@ -423,7 +433,7 @@ def get_sdp_result( gtm_ids ):
                         sdp_result_df.loc[:,'load':].apply(pd.to_numeric)
                     return sdp_result_df
                 else:
-                    print('These selected boring(en): ' + values_str + \
+                    print('These selected boring(en): ' + str(values) + \
                         ' do not contain any SDP_results.')
             else:
                 raise TypeError('Not all inputs are integers')
@@ -438,14 +448,14 @@ def join_trx_with_trx_results( gtm_ids, proef_type = 'CD' ):
             if all( isinstance( x, ( int )) for x in gtm_ids ):
 
                 values = tuple(gtm_ids)
-                values_str = '(' + ','.join(str(i) for i in values).strip(',') + ')'
+                #values_str = '(' + ','.join(str(i) for i in values).strip(',') + ')'
                 query = 'SELECT trx.gtm_id, volumegewicht_droog, volumegewicht_nat, ' \
                     + 'watergehalte, terreinspanning, bezwijksnelheid, trx_result.trx_volgnr, ea, '\
                     + 'coh, fi FROM trx ' \
                     + 'INNER JOIN trx_result ON trx.gtm_id = trx_result.gtm_id '\
                     + 'AND trx.trx_volgnr = trx_result.trx_volgnr '\
-                    + 'WHERE proef_type = \'' + proef_type + '\' AND trx.gtm_id IN ' + values_str
-                fetched, description = fetch(query)
+                    + 'WHERE proef_type = %s AND trx.gtm_id IN %s'
+                fetched, description = fetch(query, (proef_type, values))
                 if( len( fetched ) > 0 ):
                     trx_df = pd.DataFrame(fetched)
                     colnames = [desc[0] for desc in description]
@@ -453,7 +463,7 @@ def join_trx_with_trx_results( gtm_ids, proef_type = 'CD' ):
                     trx_df.volumegewicht_nat = trx_df.volumegewicht_nat.astype(float)
                     return trx_df
                 else:
-                    raise ValueError('These selected boring(en): ' + values_str + ' do not contain any trx + trx_result.')
+                    raise ValueError('These selected boring(en): ' + str(values) + ' do not contain any trx + trx_result.')
             else:
                 raise TypeError('not all inputs are ints')    
         else:

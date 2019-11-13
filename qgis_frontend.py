@@ -1,3 +1,23 @@
+
+
+# Inputs:
+# Locatie ids uit QGIS
+# hoogte selectie voor ALLE monsters Zbot en Ztop
+# Proef_types voor triaxiaal proeven: ['CU','UU', 'CD']
+# Volume gewicht voor triaxiaal proeven Vgmin Vgmax
+# Rek ea voor de LST-squares voor triaxiaal proeven: [2,5] or [2]
+# Output file/dir: 'D:\documents\Proeven-Selectie.xlsx'
+hoogte_selectie = [100, -10] # mNAP
+proef_types = ['CU'] # Consolidated Undrained, Unconsolidated Undrained, Consolidated Drained ['CU','CD','UU']
+volume_gewicht_selectie = [9, 22] # kN/m3
+rek_selectie = [2] # Lijst met rek percentages waar statistieken van gemaakt worden
+output_location = r'' # Output folder zoals: D:\Documents\geo_parameters\'
+output_file = 'TRX_Example.xlsx' # Excel filename waar alle data in komt te staan
+show_plot = True # Laat alle plotjes zien op je scherm
+save_plot = False # Sla alle plotje automatisch op in output_location
+
+
+# Begin van het script
 import sys, os, shutil
 os.chdir(r'D:\Documents\GitHub\proeven_verzameling')
 sys.path.append(r'D:\Documents\GitHub\proeven_verzameling')
@@ -9,22 +29,6 @@ import numpy as np
 active_layer = iface.activeLayer()
 
 loc_ids = qb.get_loc_ids(active_layer)
-
-# Inputs:
-# Locatie ids uit QGIS
-# hoogte selectie voor ALLE monsters Zbot en Ztop
-# Proef_types voor triaxiaal proeven: ['CU','UU', 'CD']
-# Volume gewicht voor triaxiaal proeven Vgmin Vgmax
-# Rek ea voor de LST-squares voor triaxiaal proeven: [2,5] or [2]
-# Output file/dir: 'D:\documents\Proeven-Selectie.xlsx'
-hoogte_selectie = [100, -10] # mNAP
-proef_types = ['CU'] # Consolidated Undrained, Unconsolidated Undrained, Consolidated Drained
-volume_gewicht_selectie = [9, 22] # kN/m3
-rek_selectie = [2] # Lijst met rek percentages waar statistieken van gemaakt worden
-output_file = 'TRX_Example.xlsx'
-show_plot = True
-save_plot = False
-
 df_meetp = qb.get_meetpunten(loc_ids)
 df_geod = qb.get_geo_dossiers( df_meetp.gds_id )
 df_gm = qb.get_geotech_monsters(loc_ids)

@@ -345,7 +345,7 @@ def get_least_squares( df_trx_dlp_result, name = 'TRX_DLP', ea = 2, show_plot = 
         
         ax.plot([min(x), max(x)], [func(a,b,min(x)), func(a,b,max(x))], c='black', label='least squares fit')
         text = 'Line: \u03A4 = \u03C3 * tan( ' + str(round(alpha,3)) + ' ) + ' + str(round(b,2)) \
-            + '\n' + '\u03B1=' + str(round(alpha,3)) + ', a=' + str(round(b,2)) + ', fi=' + str(round(fi,3)) + ', coh=' + str(round(coh,2)) \
+            + '\n' + '\u03B1=' + str(round(alpha,3)) + ', a=' + str(round(b,2)) + ', fi=' + str(round(np.degrees(fi),1)) + '\u00B0, coh=' + str(round(coh,2)) \
             + '\n' + 'Squared Error: ' + str(round(E,1))\
             + '\n' + 'Mean Squared Error: ' + str(round(E_per_n,2))\
             + '\n' + 'Mean Error: ' + str(round(np.sqrt(E_per_n),2))\

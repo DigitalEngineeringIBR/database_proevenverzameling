@@ -1,5 +1,3 @@
-
-
 # Inputs:
 # Locatie ids uit QGIS
 # hoogte selectie voor ALLE monsters Zbot en Ztop
@@ -9,76 +7,99 @@
 # Output file/dir: 'D:\documents\Proeven-Selectie.xlsx'
 hoogte_selectie = [100, -100] # mNAP
 proef_types = ['CU'] # Consolidated Undrained, Unconsolidated Undrained, Consolidated Drained ['CU','CD','UU']
-volume_gewicht_selectie = [18, 22] # kN/m3
-rek_selectie = [2,5] # Lijst met rek percentages waar statistieken van gemaakt worden
+volume_gewicht_selectie = [9, 22] # kN/m3
+rek_selectie = [5] # Lijst met rek percentages waar statistieken van gemaakt worden
 output_location = r'' # Output folder zoals: D:\Documents\geo_parameters\'
 output_file = 'TRX_Example.xlsx' # Excel filename waar alle data in komt te staan
-show_plot = False # Laat alle plotjes zien op je scherm
+show_plot = True # Laat alle plotjes zien op je scherm
 save_plot = False # Sla alle plotje automatisch op in output_location
 
 
-# Begin van het script
 import sys, os, shutil
+# Change the directory so the script can open all files in this directory easily
 os.chdir(r'D:\Documents\GitHub\proeven_verzameling')
+# Adding the same path to the python system so that qgis_backend can be imported
 sys.path.append(r'D:\Documents\GitHub\proeven_verzameling')
-from qgis.utils import *
+from qgis.utils import iface
 import qgis_backend as qb
 import pandas as pd
 import numpy as np
-
+#Get the active layer from QGIS
 active_layer = iface.activeLayer()
-
+# Extract the loc ids from the selected points in the active layer
 loc_ids = qb.get_loc_ids(active_layer)
+# Get all meetpunten related to these loc_ids
 df_meetp = qb.get_meetpunten(loc_ids)
+# Same but for: geotechnical dossiers
 df_geod = qb.get_geo_dossiers( df_meetp.gds_id )
+# Same but for: geotechnical monsters
 df_gm = qb.get_geotech_monsters(loc_ids)
+# Filter the Geotechnical monsters on height
 df_gm_filt_on_z = qb.select_on_z_coord(df_gm, hoogte_selectie[0], hoogte_selectie[1])
-
+# Add the df_meetp, df_geod and df_gm_filt_on_z to a dataframe dictionary
 df_dict = {'BIS_Meetpunten': df_meetp, 'BIS_GEO_Dossiers':df_geod, 'BIS_Geotechnische_Monsters':df_gm_filt_on_z}
 
+# Get all samendrukkingsproeven related to gtm_ids in the geotechnische monster dataframe
 df_sdp = qb.get_sdp(df_gm_filt_on_z.gtm_id)
 if df_sdp is not None:
+    # If there are related samendrukkingsproeven, also get the sdp results and append to the dictionary
     df_sdp_result = qb.get_sdp_result(df_gm.gtm_id)
     df_dict.update({'BIS_SDP_Proeven':df_sdp, 'BIS_SDP_Resultaten':df_sdp_result})
 
+# Get all Triaxiaalproeven related to gtm_ids in the geotechnische monster dataframe
 df_trx = qb.get_trx(df_gm_filt_on_z.gtm_id, proef_type = proef_types)
-
+# Select only the Triaxiaalproeven that are within the volume_gewicht_selectie range
+df_trx = qb.select_on_vg(df_trx, volume_gewicht_selectie[1], volume_gewicht_selectie[0])
+# If there are related TRX proeven...
 if df_trx is not None:
-    df_trx = qb.select_on_vg(df_trx, volume_gewicht_selectie[1], volume_gewicht_selectie[0])
+    # Get all TRX results, TRX deelproeven and TRX deelproef results
     df_trx_results = qb.get_trx_result(df_trx.gtm_id)
     df_trx_dlp = qb.get_trx_dlp(df_trx.gtm_id)
     df_trx_dlp_result = qb.get_trx_dlp_result(df_trx.gtm_id)
-
+    # Append the previous 4 dataframes to the dataframe dictionary
     df_dict.update({'BIS_TRX_Proeven':df_trx, 'BIS_TRX_Results':df_trx_results, 'BIS_TRX_DLP':df_trx_dlp, 'BIS_TRX_DLP_Results': df_trx_dlp_result})
     
-    # Statistieken
-    if len(df_trx.index) > 1: # je kan geen statistieken doen op 1 proef
+    # Doing statistics on the select TRX proeven
+    if len(df_trx.index) > 1: # With only 1 experiment you cant do any statistical analysis
+        ## Create a linear space between de maximal volumetric weight and the minimal volumetric weight
         minvg, maxvg = min(df_trx.volumegewicht_nat), max(df_trx.volumegewicht_nat)
         N = round(len(df_trx.index)/5) + 1
-        cutoff = 1
+        cutoff = 1 # The interval cant be lower than 1 kn/m3
         if (maxvg-minvg)/N > cutoff:
             Vg_linspace = np.linspace(minvg, maxvg, N)
         else:
             Vg_linspace = np.linspace(minvg, maxvg, round((maxvg-minvg)/cutoff))
+        ##
+        # Initializing the volumetric max. and min. vector
         Vgmax = Vg_linspace[1:]
         Vgmin = Vg_linspace[0:-1]
+
         df_vg_stat_dict = {}
-        for vg_max, vg_min in zip(Vgmax, Vgmin):
-            gtm_ids = qb.select_on_vg(df_trx, Vg_max = vg_max, Vg_min = vg_min, soort = 'nat')['gtm_id']
-            if len(gtm_ids) > 0:
-                df_trx_results_temp = qb.get_trx_result(gtm_ids)
-                stat_df = qb.get_average_per_ea(df_trx_results_temp, rek_selectie)
-                stat_df.index.name = key = 'Vg: ' + str(round(vg_min,1)) + '-' + str(round(vg_max, 1)) + ' kN/m3'
-                stat_df.columns.name = 'ea ='
-                df_vg_stat_dict[key] = stat_df
-        
-        df_dict_lst_sqrs = {}
-        for ea in  rek_selectie:
+        df_lst_sqrs_dict = {}
+        for ea in rek_selectie:
             ls_list = []
+            avg_list = []
+            # For every max./min. pair do the following
             for vg_max, vg_min in zip(Vgmax, Vgmin):
+                # Make a selection for this volumetric weight interval
                 gtm_ids = qb.select_on_vg(df_trx, Vg_max = vg_max, Vg_min = vg_min, soort = 'nat')['gtm_id']
-                key = 'Vg: ' + str(round(vg_min,1)) + '-' + str(round(vg_max, 1)) + ' kN/m3'
                 if len(gtm_ids) > 0:
+                    # Get the related TRX results...
+                    # 
+                    ## Potentially the next line could be done without querying the database again 
+                    ## for the same data that is already availabe in the variable df_trx_results
+                    ## but I have not found the right type of filter methods in Pandas which
+                    ## can replicate the SQL filters
+                    # 
+                    df_trx_results_temp = qb.get_trx_result(gtm_ids)
+                    # Calculate the averages and standard deviation of fi and coh for different strain types
+                    mean_fi,std_fi,mean_coh,std_coh,N = qb.get_average_per_ea(df_trx_results_temp, ea)
+                    # Create a tag for this particular volumetric weight interval
+                    key = 'Vg: ' + str(round(vg_min,1)) + '-' + str(round(vg_max, 1)) + ' kN/m3'
+                    
+                    avg_list.append(pd.DataFrame(index = [key], data = [[vg_min, vg_max, mean_fi, mean_coh, std_fi, std_coh, N]],\
+                        columns=['min(Vg)','max(Vg)','mean(fi)','mean(coh)','std(fi)','std(coh)','N']))
+
                     fi, coh, E, E_per_n, eps, N = qb.get_least_squares(
                         qb.get_trx_dlp_result(gtm_ids), 
                         ea = ea, 
@@ -90,18 +111,27 @@ if df_trx is not None:
                         columns=['min(Vg)', 'max(Vg)','fi','coh','Abs. Sq. Err.','Abs. Sq. Err./N','Mean Rel. Err. %','N']))
             if len(ls_list)>0:
                 df_ls_stat = pd.concat(ls_list)
-                df_ls_stat.index.name = 'ea: ' + str(ea)
-                df_dict_lst_sqrs.update({ str(ea) + r'% rek least squares fit':df_ls_stat})
+                df_ls_stat.index.name = 'ea: ' + str(ea) +'%'
+                df_lst_sqrs_dict.update({ str(ea) + r'% rek least squares fit':df_ls_stat})
+            if len(avg_list)>0:
+                df_avg_stat = pd.concat(avg_list)
+                df_avg_stat.index.name = 'ea: ' + str(ea) +'%'
+                df_vg_stat_dict.update({ str(ea) + r'% rek gemiddelde fit':df_avg_stat})
 
         df_bbn_stat_dict = {}
-        for bbn_code in pd.unique(df_trx.bbn_kode):
-            gtm_ids = df_trx[df_trx.bbn_kode == bbn_code].gtm_id
-            if len(gtm_ids > 0):
-                df_trx_results_temp = qb.get_trx_result(gtm_ids)
-                stat_df = qb.get_average_per_ea(df_trx_results_temp, rek_selectie)
-                stat_df.index.name = key = bbn_code
-                stat_df.columns.name = 'ea ='
-                df_bbn_stat_dict[key] = stat_df
+        for ea in rek_selectie:
+            bbn_list = []
+            for bbn_code in pd.unique(df_trx.bbn_kode):
+                gtm_ids = df_trx[df_trx.bbn_kode == bbn_code].gtm_id
+                if len(gtm_ids > 0):
+                    df_trx_results_temp = qb.get_trx_result(gtm_ids)
+                    mean_fi,std_fi,mean_coh,std_coh,N = qb.get_average_per_ea(df_trx_results_temp, ea)
+                    bbn_list.append(pd.DataFrame(index = [bbn_code], data = [[mean_fi, mean_coh, std_fi, std_coh, N]],\
+                        columns=['mean(fi)','mean(coh)','std(fi)','std(coh)','N']))
+            if len(bbn_list)>0:        
+                df_bbn_stat = pd.concat(bbn_list)
+                df_bbn_stat.index.name = 'ea: ' + str(ea) +'%'
+                df_bbn_stat_dict.update({ str(ea) + r'% rek per BBN code':df_bbn_stat})
 
 #Make a copy of an excelsheet that already has the two important NEN 9997 tables in it
 #Could be skipped but pd.ExcelWriter(..., mode = 'a') needs to be put on a write/overwrite mode = 'w' i think
@@ -121,9 +151,9 @@ with pd.ExcelWriter(output_file,engine='openpyxl',mode='a') as writer: #writer i
             df_bbn_stat_dict[key].to_excel(writer, sheet_name = 'bbn Statistieken', startrow = row)
             row = row + len(df_bbn_stat_dict[key].index) + 2
         row=0
-        for key in df_dict_lst_sqrs:
-            df_dict_lst_sqrs[key].to_excel(writer, sheet_name = 'Least Squares Statistieken', startrow = row)
-            row = row + len(df_dict_lst_sqrs[key].index) + 2
+        for key in df_lst_sqrs_dict:
+            df_lst_sqrs_dict[key].to_excel(writer, sheet_name = 'Least Squares Statistieken', startrow = row)
+            row = row + len(df_lst_sqrs_dict[key].index) + 2
 
 os.startfile(output_file)
 

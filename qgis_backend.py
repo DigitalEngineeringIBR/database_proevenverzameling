@@ -270,29 +270,20 @@ def select_on_ea( trx_result, ea = 2 ):
      else:
          raise TypeError('No pandas dataframe was supplied')
 
-def get_average_per_ea( df_trx_result, ea_list = [0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1,1.2,1.3,1.4,1.5,1.6,1.7,1.8,1.9,2,3,4,5,6,7,8,9,10,11,12,13,14,15] ):
+def get_average_per_ea( df_trx_result, ea = 5):
     if isinstance( df_trx_result, pd.DataFrame ):
-        mean_coh = []
-        mean_fi = []
-        nstd_coh = []
-        nstd_fi = []
-        N = []
-        for i in ea_list:
-            trx_temp = select_on_ea( df_trx_result , i)
-            N.append(int(len(trx_temp['coh'])))
-            mean_coh.append( round( np.mean( trx_temp['coh'] ), 1 ))
-            mean_fi.append( round( np.mean( trx_temp['fi'] ), 1 ))
-            nstd_coh.append( round( np.std( trx_temp['coh'] )/np.mean( trx_temp['coh'] ),2 ))
-            nstd_fi.append( round( np.std( trx_temp['fi'] )/np.mean( trx_temp['fi'] ), 2 ))
-        mux = pd.Index(['mean(coh)', 'nstd(coh)', 'mean(fi)', 'nstd(fi)','N elements'])
-        stat_df = pd.DataFrame([mean_coh,nstd_coh,mean_fi,nstd_fi,N], index = mux, columns = ea_list)
-        stat_df.columns.name = 'ea ='
-        return stat_df
+        df_trx_temp = select_on_ea(df_trx_result, ea)
+        mean_coh = round( np.mean( df_trx_temp['coh'] ), 1 )
+        mean_fi = round( np.mean( df_trx_temp['fi'] ), 1 )
+        std_coh = round( np.std( df_trx_temp['coh'] ),1 )
+        std_fi = round( np.std( df_trx_temp['fi'] ), 1 )
+        N = int(len(df_trx_temp.index))
+        return mean_fi,std_fi,mean_coh,std_coh,N
     else:
         raise TypeError('No pandas dataframe was supplied.')
 
 def get_least_squares( df_trx_dlp_result, name = 'TRX_DLP', ea = 2, show_plot = True, save_plot = False ):
-    df = df_trx_dlp_result[df_trx_dlp_result.ea == ea]
+    df = select_on_ea( df_trx_dlp_result, ea)
     data_full = (df.p, df.q)
     ### Begin Least Squares fitting van een 'linear regression'
     x, y = data_full
@@ -344,8 +335,8 @@ def get_least_squares( df_trx_dlp_result, name = 'TRX_DLP', ea = 2, show_plot = 
                     ax4.annotate(gtm_ids[i], xy=(x2[i], y_res[i]), xycoords='data',weight='bold')
         
         ax.plot([min(x), max(x)], [func(a,b,min(x)), func(a,b,max(x))], c='black', label='least squares fit')
-        text = 'Line: \u03A4 = \u03C3 * tan( ' + str(round(alpha,3)) + ' ) + ' + str(round(b,2)) \
-            + '\n' + '\u03B1=' + str(round(alpha,3)) + ', a=' + str(round(b,2)) + ', fi=' + str(round(np.degrees(fi),1)) + '\u00B0, coh=' + str(round(coh,2)) \
+        text = r'Line: $\tau = \sigma_n $* tan( ' + str(round(alpha,3)) + r' ) + ' + str(round(b,2)) \
+            + '\n' + r'$\alpha=' + str(round(alpha,3)) + r', a=' + str(round(b,2)) + r', \phi= $' + str(round(np.degrees(fi),1)) + '\u00B0, C=' + str(round(coh,2))\
             + '\n' + 'Squared Error: ' + str(round(E,1))\
             + '\n' + 'Mean Squared Error: ' + str(round(E_per_n,2))\
             + '\n' + 'Mean Error: ' + str(round(np.sqrt(E_per_n),2))\
@@ -361,22 +352,22 @@ def get_least_squares( df_trx_dlp_result, name = 'TRX_DLP', ea = 2, show_plot = 
 
         ax.set_title(name)
         ax.legend(loc=2)
-        ax.set_xlabel('\u03C3_n Normaalspanning')
-        ax.set_ylabel('\u03A4 Schuifspanning')
+        ax.set_xlabel('$\sigma_n$ Normaalspanning')
+        ax.set_ylabel(r'$\tau$ Schuifspanning')
         ax.set_xlim(xmin=0)
         ax.set_ylim(ymin=0)
 
         ax2.hist(x,round(N/4))
         ax3.hist(y,round(N/4))
-        ax2.set_title('Histogrammen van \u03C3_n en \u03A4')
+        ax2.set_title(r'Histogrammen van $\sigma_n$ en $\tau$')
         ax2.set_ylabel('N')
         ax3.set_ylabel('N')
-        ax2.set_xlabel('\u03C3_n als ( \u03C3_3 + \u03C3_2 )/2')
-        ax3.set_xlabel('\u03A4 als ( \u03C3_3 - \u03C3_1 )/2')
+        ax2.set_xlabel(r'$\sigma_n = \frac{ \sigma_1 + \sigma_3 }{2}$')
+        ax3.set_xlabel(r'$\tau = \frac{ \sigma_1 - \sigma_3 }{2}$')
 
         ax4.set_title('Residual Plot')
-        ax4.set_ylabel('Residual Schuifspanning \u03A4_r')
-        ax4.set_xlabel('\u03C3_n Normaalspanning')
+        ax4.set_ylabel('Residual Schuifspanning $\tau_r$')
+        ax4.set_xlabel(r'$\sigma_n$ Normaalspanning')
 
         plt.tight_layout()
         if show_plot:
@@ -384,7 +375,7 @@ def get_least_squares( df_trx_dlp_result, name = 'TRX_DLP', ea = 2, show_plot = 
         if save_plot:
             print('nothingyet')
             #save the plot in the directory
-    return round(fi,3), round(coh,1), round(E), round(E_per_n,1), round(eps*100,1), N
+    return round(np.degrees(fi),1), round(coh,1), round(E), round(E_per_n,1), round(eps*100,1), N
 
 def get_sdp( gtm_ids ):
     if isinstance(gtm_ids, ( list, tuple, pd.Series ) ):

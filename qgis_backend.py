@@ -304,7 +304,7 @@ def get_least_squares( df_trx_dlp_result, name = 'TRX_DLP', ea = 2, show_plot = 
 
     a = (yx_quadm - y_m*x_m)/(x_quadm - x_m**2) # Hellings Coefficient
     b = y_m - a*x_m   # Start Coefficent/cohesie
-    alpha = np.arctan(a) # fi
+    alpha = np.arctan(a) 
     fi = np.arcsin(a)
     coh = b/np.cos(fi)
 
@@ -384,7 +384,7 @@ def get_least_squares( df_trx_dlp_result, name = 'TRX_DLP', ea = 2, show_plot = 
         if save_plot:
             print('nothingyet')
             #save the plot in the directory
-        return round(fi,3), round(coh,1), round(E), round(E_per_n,1), round(eps*100,1), N
+    return round(fi,3), round(coh,1), round(E), round(E_per_n,1), round(eps*100,1), N
 
 def get_sdp( gtm_ids ):
     if isinstance(gtm_ids, ( list, tuple, pd.Series ) ):

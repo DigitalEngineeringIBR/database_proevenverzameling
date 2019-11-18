@@ -7,13 +7,13 @@
 # Volume gewicht voor triaxiaal proeven Vgmin Vgmax
 # Rek ea voor de LST-squares voor triaxiaal proeven: [2,5] or [2]
 # Output file/dir: 'D:\documents\Proeven-Selectie.xlsx'
-hoogte_selectie = [100, -10] # mNAP
+hoogte_selectie = [100, -100] # mNAP
 proef_types = ['CU'] # Consolidated Undrained, Unconsolidated Undrained, Consolidated Drained ['CU','CD','UU']
-volume_gewicht_selectie = [9, 22] # kN/m3
-rek_selectie = [2] # Lijst met rek percentages waar statistieken van gemaakt worden
+volume_gewicht_selectie = [18, 22] # kN/m3
+rek_selectie = [2,5] # Lijst met rek percentages waar statistieken van gemaakt worden
 output_location = r'' # Output folder zoals: D:\Documents\geo_parameters\'
 output_file = 'TRX_Example.xlsx' # Excel filename waar alle data in komt te staan
-show_plot = True # Laat alle plotjes zien op je scherm
+show_plot = False # Laat alle plotjes zien op je scherm
 save_plot = False # Sla alle plotje automatisch op in output_location
 
 
@@ -83,7 +83,8 @@ if df_trx is not None:
                         qb.get_trx_dlp_result(gtm_ids), 
                         ea = ea, 
                         name = 'Least Squares Analysis, ea: ' + str(ea) + '\n' + key,
-                        show_plot = show_plot, save_plot = save_plot
+                        show_plot = show_plot, 
+                        save_plot = save_plot
                         )
                     ls_list.append(pd.DataFrame(index = [key], data = [[vg_min, vg_max, fi, coh, E, E_per_n, eps, N]],\
                         columns=['min(Vg)', 'max(Vg)','fi','coh','Abs. Sq. Err.','Abs. Sq. Err./N','Mean Rel. Err. %','N']))

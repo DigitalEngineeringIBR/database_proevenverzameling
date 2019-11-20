@@ -1,9 +1,18 @@
+'''
+Script: qgis_backend.py
+Repository: https://github.com/KRS-dev/proeven_verzameling
+Author: Kevin Schuurman
+E-mail: kevinschuurman98@gmail.com
+Summary: Base functions for qgis_frontend.py, Querying the data from the proeven verzameling database.
+'''
+
 import pandas as pd
 import numpy as np
 import psycopg2 as psy
 import matplotlib.pyplot as plt
 import matplotlib.offsetbox as offsetbox
 
+# Database Connection
 def fetch (query, data):
     ## Using a PostgreSQL database
     with psy.connect(
@@ -13,15 +22,17 @@ def fetch (query, data):
         password = "admin"
         ) as dbcon:
     ## Using an Oracle database:
-    # with cora.connect(
-    #   user = "",
-    #   password = "",
-    #   dsn = ""*
-    #    ) as dbcon:
-    ## *Can be a: 
-    ## 1. Oracle Easy Connect string
-    ## 2. Oracle Net Connect Descriptor string
-    ## 3. Net Service Name mapping to connect description
+    '''
+    with cora.connect(
+       user = "",
+       password = "",
+       dsn = ""*
+        ) as dbcon:
+    # *Can be a: 
+    # 1. Oracle Easy Connect string
+    # 2. Oracle Net Connect Descriptor string
+    # 3. Net Service Name mapping to connect description
+    '''
 
         cur = dbcon.cursor()
         cur.execute(query, data)
@@ -30,6 +41,7 @@ def fetch (query, data):
         description = cur.description
         return fetched, description
 
+# Getting the loc_id's from the Qgislayer
 def get_loc_ids(QgisLayer):
     loc_ids = []
     features = QgisLayer.selectedFeatures()
@@ -49,13 +61,12 @@ def get_loc_ids(QgisLayer):
     else:
         raise KeyError('No features were selected in the layer')
 
+# Querying meetpunten
 def get_meetpunten( loc_ids ):
     if isinstance( loc_ids, ( list, tuple, pd.Series) ):
         if len( loc_ids ) > 0:
             if( all( isinstance(x, int) for x in loc_ids )):
-
                 values = tuple(loc_ids)
-                #values_str = '(' + ','.join( str(i) for i in values ).strip(',') + ')'
                 query = 'SELECT * FROM graf_loc_aanduidingen '\
                     + 'INNER JOIN meetpunten ON meetpunten.mpt_id = graf_loc_aanduidingen.loc_id '\
                     + 'WHERE graf_loc_aanduidingen.loc_id IN %s'
@@ -79,13 +90,12 @@ def get_meetpunten( loc_ids ):
     else:
         raise TypeError('Input is not a list or tuple')
 
+# Querying geodossiers
 def get_geo_dossiers(gds_ids):
     if isinstance(gds_ids, (list, tuple, pd.Series)):
         if len(gds_ids) > 0:
             if(all(isinstance(x, int) for x in gds_ids)):
-
                 values = tuple( gds_ids )
-                #values_str = '(' + ','.join( str(i) for i in values ).strip(',') + ')'
                 query = 'SELECT * FROM geo_dossiers WHERE gds_id IN %s'
                 fetched, description = fetch(query, (values,))
                 if ( 0 < len( fetched )):
@@ -103,13 +113,12 @@ def get_geo_dossiers(gds_ids):
     else:
         raise TypeError('Input is not a list or tuple')    
 
+# Querying geotechnische monsters
 def get_geotech_monsters( bor_ids ):
     if isinstance( bor_ids, ( list, tuple, pd.Series) ):
         if len( bor_ids ) > 0:
             if( all( isinstance( x, (int)) for x in bor_ids )):
-
                 values = tuple(bor_ids)
-                #values_str = '(' + ','.join(str(i) for i in values).strip(',') + ')'
                 query = 'SELECT * FROM geotech_monsters WHERE bor_id IN %s'
                 fetched, description = fetch(query, (values,))
                 if( len( fetched ) > 0 ):
@@ -127,7 +136,8 @@ def get_geotech_monsters( bor_ids ):
             raise ValueError('No bor_ids were supplied.') 
     else:
         raise TypeError('Input is not a list or tuple')
-        
+
+# Filter on height of the Geotechnical monsters        
 def select_on_z_coord( g_mon_df, zmax, zmin ):
     if isinstance( g_mon_df, pd.DataFrame ):
         new_g_mon_df = g_mon_df[( zmax > g_mon_df.z_coordinaat_laag ) & ( g_mon_df.z_coordinaat_laag > zmin )]
@@ -135,16 +145,14 @@ def select_on_z_coord( g_mon_df, zmax, zmin ):
     else:
          raise TypeError('No pandas dataframe was supplied')
 
+# Querying TRX_proeven
 def get_trx( gtm_ids, proef_type = ('CD') ):
     if isinstance( gtm_ids, ( list, tuple, pd.Series ) ):
         if all( any( x == i for i in ('CU','CD','UU') ) for x in proef_type ):
             if len( gtm_ids ) > 0:
                 if all( isinstance( x, ( int )) for x in gtm_ids ):
-
                     values = tuple(gtm_ids)
-                    #values_str = '(' + ','.join( str( i ) for i in values ).strip(',') + ')'
                     proef_type = tuple(proef_type)
-                    #proef_type_str = '(\'' + '\',\''.join( str( i ) for i in proef_type ).strip(',\'') + '\')'
                     query = 'SELECT * FROM trx WHERE proef_type IN %s AND gtm_id IN %s'
                     fetched, description = fetch(query, (proef_type, values))
                     if( len( fetched ) > 0 ):
@@ -166,7 +174,8 @@ def get_trx( gtm_ids, proef_type = ('CD') ):
             raise TypeError('Only CU, CD and UU or a combination are allowed as proef_type')
     else:
         raise TypeError('Input is not a list or tuple')
-      
+
+# Filter on Volumetric weight      
 def select_on_vg( trx_df, Vg_max = 20, Vg_min = 17, soort ='nat' ):
     #Volume gewicht y in kN/m3
     if isinstance(trx_df, pd.DataFrame):
@@ -181,15 +190,12 @@ def select_on_vg( trx_df, Vg_max = 20, Vg_min = 17, soort ='nat' ):
     else:
         raise TypeError('No pandas dataframe was supplied')
 
+# Querying TRX_results
 def get_trx_result( gtm_ids ):
-    if isinstance(gtm_ids, ( list, tuple, pd.Series ) ):
-        
-        if len( gtm_ids ) > 0:
-            
+    if isinstance(gtm_ids, ( list, tuple, pd.Series ) ):  
+        if len( gtm_ids ) > 0:    
             if all(isinstance(x, (int)) for x in gtm_ids):
-
                 values = tuple( gtm_ids )
-                #values_str = '(' + ','.join(str(i) for i in values).strip(',') + ')'
                 query = 'SELECT * FROM trx_result WHERE gtm_id IN %s' 
                 fetched, description = fetch(query, (values,))
                 if( len( fetched ) > 0 ):
@@ -208,15 +214,12 @@ def get_trx_result( gtm_ids ):
     else:
          raise TypeError('Input is not a list or tuple')   
 
+# Querying TRX_deelproeven
 def get_trx_dlp( gtm_ids ):
-    if isinstance(gtm_ids, ( list, tuple, pd.Series ) ):
-        
-        if len( gtm_ids ) > 0:
-            
+    if isinstance(gtm_ids, ( list, tuple, pd.Series ) ):   
+        if len( gtm_ids ) > 0: 
             if all(isinstance(x, (int)) for x in gtm_ids):
-            
                 values = tuple( gtm_ids )
-                #values_str = '(' + ','.join(str(i) for i in values).strip(',') + ')'
                 query = 'SELECT * FROM trx_dlp WHERE gtm_id IN %s' 
                 fetched, description = fetch(query, (values,))
                 if( len( fetched ) > 0 ):
@@ -235,15 +238,12 @@ def get_trx_dlp( gtm_ids ):
     else:
          raise TypeError('Input is not a list or tuple')   
 
+# Querying TRX_dlp_results
 def get_trx_dlp_result( gtm_ids ):
-    if isinstance(gtm_ids, ( list, tuple, pd.Series ) ):
-        
+    if isinstance(gtm_ids, ( list, tuple, pd.Series ) ): 
         if len( gtm_ids ) > 0:
-            
             if all(isinstance(x, (int)) for x in gtm_ids):
-
                 values = tuple( gtm_ids )
-                #values_str = '(' + ','.join(str(i) for i in values).strip(',') + ')'
                 query = 'SELECT * FROM trx_dlp_result WHERE gtm_id IN %s' 
                 fetched, description = fetch(query, (values,))
                 if( len( fetched ) > 0 ):
@@ -262,7 +262,8 @@ def get_trx_dlp_result( gtm_ids ):
             raise ValueError('No gtm_ids were supplied.')
     else:
          raise TypeError('Input is not a list or tuple')   
-        
+
+# Filter on ea/strain        
 def select_on_ea( trx_result, ea = 2 ):
      if isinstance(trx_result, pd.DataFrame): 
          new_trx_result_ea = trx_result[ ea == trx_result.ea ]
@@ -270,6 +271,7 @@ def select_on_ea( trx_result, ea = 2 ):
      else:
          raise TypeError('No pandas dataframe was supplied')
 
+# Calculating averages and standard deviations on TRX_results
 def get_average_per_ea( df_trx_result, ea = 5):
     if isinstance( df_trx_result, pd.DataFrame ):
         df_trx_temp = select_on_ea(df_trx_result, ea)
@@ -282,7 +284,8 @@ def get_average_per_ea( df_trx_result, ea = 5):
     else:
         raise TypeError('No pandas dataframe was supplied.')
 
-def get_least_squares( df_trx_dlp_result, name = 'TRX_DLP', ea = 2, show_plot = True, save_plot = False ):
+# Creating least square fits on TRX_dlp_results
+def get_least_squares( df_trx_dlp_result, plot_name = 'TRX_DLP', ea = 2, show_plot = True, save_plot = False ):
     df = select_on_ea( df_trx_dlp_result, ea)
     data_full = (df.p, df.q)
     ### Begin Least Squares fitting van een 'linear regression'
@@ -377,15 +380,12 @@ def get_least_squares( df_trx_dlp_result, name = 'TRX_DLP', ea = 2, show_plot = 
             #save the plot in the directory
     return round(np.degrees(fi),1), round(coh,1), round(E), round(E_per_n,1), round(eps*100,1), N
 
+# Querying compression tests\samendrukkingsproeven
 def get_sdp( gtm_ids ):
-    if isinstance(gtm_ids, ( list, tuple, pd.Series ) ):
-        
+    if isinstance(gtm_ids, ( list, tuple, pd.Series ) ): 
         if len( gtm_ids ) > 0:
-            
             if all(isinstance(x, (int)) for x in gtm_ids):
-            
                 values = tuple( gtm_ids )
-                #values_str = '(' + ','.join(str(i) for i in values).strip(',') + ')'
                 query = 'SELECT * FROM sdp WHERE gtm_id IN %s'
                 fetched, description = fetch(query, (values,))
                 if( len( fetched ) > 0 ):
@@ -405,15 +405,12 @@ def get_sdp( gtm_ids ):
     else:
          raise TypeError('Input is not a list or tuple')   
 
+# Querying sdp_results
 def get_sdp_result( gtm_ids ):
     if isinstance(gtm_ids, ( list, tuple, pd.Series ) ):
-        
-        if len( gtm_ids ) > 0:
-            
+        if len( gtm_ids ) > 0: 
             if all(isinstance(x, (int)) for x in gtm_ids):
-
                 values = tuple( gtm_ids )
-                #values_str = '(' + ','.join(str(i) for i in values).strip(',') + ')'
                 query = 'SELECT * FROM sdp_result WHERE gtm_id IN %s'
                 fetched, description = fetch(query, (values,))
                 if( len( fetched ) > 0 ):
@@ -432,7 +429,7 @@ def get_sdp_result( gtm_ids ):
             raise ValueError('No gtm_ids were supplied.')
     else:
          raise TypeError('Input is not a list or tuple')   
-
+# NOT USED
 def join_trx_with_trx_results( gtm_ids, proef_type = 'CD' ):
     if isinstance(gtm_ids, ( list, tuple, pd.Series ) ):
         if len(gtm_ids) > 0:

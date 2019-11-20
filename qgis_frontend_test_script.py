@@ -1,21 +1,27 @@
-loc_ids = [143800, 144566, 144584, 142998, 140980, 48565, 160833, 160838, 160847, 160856, 156721, 156724, 156726, 156728, 138341, 138353, 100652, 140976, 143018, 156720, 198019, 210119, 258134, 270183, 270201, 270518, 270520, 270521, 265149, 262493, 285429, 285431, 285434, 285435, 290032, 297470, 297474, 340699, 340703, 48107, 48563, 48566, 91546, 90312, 107300, 100651, 138342, 138343, 144613]
-
-
-# Inputs:
-# Locatie ids uit QGIS
-# hoogte selectie voor ALLE monsters Zbot en Ztop
-# Proef_types voor triaxiaal proeven: ['CU','UU', 'CD']
-# Volume gewicht voor triaxiaal proeven Vgmin Vgmax
-# Rek ea voor de LST-squares voor triaxiaal proeven: [2,5] or [2]
-# Output file/dir: 'D:\documents\Proeven-Selectie.xlsx'
-hoogte_selectie = [100, -100] # mNAP
-proef_types = ['CU'] # Consolidated Undrained, Unconsolidated Undrained, Consolidated Drained ['CU','CD','UU']
-volume_gewicht_selectie = [9, 22] # kN/m3
-rek_selectie = [5] # Lijst met rek percentages waar statistieken van gemaakt worden
-output_location = r'' # Output folder zoals: D:\Documents\geo_parameters\'
-output_file = 'TRX_Example.xlsx' # Excel filename waar alle data in komt te staan
-show_plot = True # Laat alle plotjes zien op je scherm
-save_plot = False # Sla alle plotje automatisch op in output_location
+'''
+Script: qgis_frontend_test_script.py
+Repository: https://github.com/KRS-dev/proeven_verzameling
+Author: Kevin Schuurman
+E-mail: kevinschuurman98@gmail.com
+Summary: Frontend test script that can run without QGIS
+'''
+'''
+Inputs:
+hoogte selectie voor ALLE monsters Zbot en Ztop
+Proef types voor triaxiaal proeven: ['CU','UU', 'CD']
+Volume gewicht voor triaxiaal proeven Vgmin Vgmax
+Rek ea voor selectie bij LST-squares voor triaxiaal proeven
+Output file/dir: 'D:\documents\Proeven-Selectie.xlsx'
+'''
+if __name__ == "__main__":
+    hoogte_selectie = [100, -100] # mNAP
+    proef_types = ['CU'] # ['CU','CD','UU']
+    volume_gewicht_selectie = [9, 22] # kN/m3
+    rek_selectie = [5] # %
+    output_location = r'' # Example: D:\Documents\geo_parameters\'
+    output_file = 'TRX_Example.xlsx' # Example: TRX_example.xlsx
+    show_plot = True # True/False
+    save_plot = False # True/False
 
 
 import sys, os, shutil
@@ -23,43 +29,37 @@ import sys, os, shutil
 os.chdir(r'D:\Documents\GitHub\proeven_verzameling')
 # Adding the same path to the python system so that qgis_backend can be imported
 sys.path.append(r'D:\Documents\GitHub\proeven_verzameling')
+from qgis.utils import iface
 import qgis_backend as qb
 import pandas as pd
 import numpy as np
 
+loc_ids = [143800, 144566, 144584, 142998, 140980, 48565, 160833, 160838, 160847, 160856, 156721, 156724, 156726, 156728, 138341, 138353, 100652, 140976, 143018, 156720, 198019, 210119, 258134, 270183, 270201, 270518, 270520, 270521, 265149, 262493, 285429, 285431, 285434, 285435, 290032, 297470, 297474, 340699, 340703, 48107, 48563, 48566, 91546, 90312, 107300, 100651, 138342, 138343, 144613]
+
 # Get all meetpunten related to these loc_ids
 df_meetp = qb.get_meetpunten(loc_ids)
-# Same but for: geotechnical dossiers
 df_geod = qb.get_geo_dossiers( df_meetp.gds_id )
-# Same but for: geotechnical monsters
 df_gm = qb.get_geotech_monsters(loc_ids)
-# Filter the Geotechnical monsters on height
 df_gm_filt_on_z = qb.select_on_z_coord(df_gm, hoogte_selectie[0], hoogte_selectie[1])
 # Add the df_meetp, df_geod and df_gm_filt_on_z to a dataframe dictionary
 df_dict = {'BIS_Meetpunten': df_meetp, 'BIS_GEO_Dossiers':df_geod, 'BIS_Geotechnische_Monsters':df_gm_filt_on_z}
 
-# Get all samendrukkingsproeven related to gtm_ids in the geotechnische monster dataframe
-df_sdp = qb.get_sdp(df_gm_filt_on_z.gtm_id)
+df_sdp = qb.get_sdp( df_gm_filt_on_z.gtm_id )
 if df_sdp is not None:
-    # If there are related samendrukkingsproeven, also get the sdp results and append to the dictionary
     df_sdp_result = qb.get_sdp_result(df_gm.gtm_id)
     df_dict.update({'BIS_SDP_Proeven':df_sdp, 'BIS_SDP_Resultaten':df_sdp_result})
 
-# Get all Triaxiaalproeven related to gtm_ids in the geotechnische monster dataframe
 df_trx = qb.get_trx(df_gm_filt_on_z.gtm_id, proef_type = proef_types)
-# Select only the Triaxiaalproeven that are within the volume_gewicht_selectie range
 df_trx = qb.select_on_vg(df_trx, volume_gewicht_selectie[1], volume_gewicht_selectie[0])
-# If there are related TRX proeven...
 if df_trx is not None:
     # Get all TRX results, TRX deelproeven and TRX deelproef results
     df_trx_results = qb.get_trx_result(df_trx.gtm_id)
     df_trx_dlp = qb.get_trx_dlp(df_trx.gtm_id)
     df_trx_dlp_result = qb.get_trx_dlp_result(df_trx.gtm_id)
-    # Append the previous 4 dataframes to the dataframe dictionary
     df_dict.update({'BIS_TRX_Proeven':df_trx, 'BIS_TRX_Results':df_trx_results, 'BIS_TRX_DLP':df_trx_dlp, 'BIS_TRX_DLP_Results': df_trx_dlp_result})
     
     # Doing statistics on the select TRX proeven
-    if len(df_trx.index) > 1: # With only 1 experiment you cant do any statistical analysis
+    if len(df_trx.index) > 1:
         ## Create a linear space between de maximal volumetric weight and the minimal volumetric weight
         minvg, maxvg = min(df_trx.volumegewicht_nat), max(df_trx.volumegewicht_nat)
         N = round(len(df_trx.index)/5) + 1
@@ -68,8 +68,7 @@ if df_trx is not None:
             Vg_linspace = np.linspace(minvg, maxvg, N)
         else:
             Vg_linspace = np.linspace(minvg, maxvg, round((maxvg-minvg)/cutoff))
-        ##
-        # Initializing the volumetric max. and min. vector
+        
         Vgmax = Vg_linspace[1:]
         Vgmin = Vg_linspace[0:-1]
 
@@ -78,36 +77,36 @@ if df_trx is not None:
         for ea in rek_selectie:
             ls_list = []
             avg_list = []
-            # For every max./min. pair do the following
             for vg_max, vg_min in zip(Vgmax, Vgmin):
                 # Make a selection for this volumetric weight interval
                 gtm_ids = qb.select_on_vg(df_trx, Vg_max = vg_max, Vg_min = vg_min, soort = 'nat')['gtm_id']
                 if len(gtm_ids) > 0:
+                    # Create a tag for this particular volumetric weight interval
+                    key = 'Vg: ' + str(round(vg_min,1)) + '-' + str(round(vg_max, 1)) + ' kN/m3'
                     # Get the related TRX results...
                     # 
                     ## Potentially the next line could be done without querying the database again 
-                    ## for the same data that is already availabe in the variable df_trx_results
+                    ## for the data that is already availabe in the variable df_trx_results
                     ## but I have not found the right type of filter methods in Pandas which
                     ## can replicate the SQL filters
                     # 
                     df_trx_results_temp = qb.get_trx_result(gtm_ids)
-                    # Calculate the averages and standard deviation of fi and coh for different strain types
+                    # Calculate the averages and standard deviation of fi and coh for different strain types and add them to a dataframe list
                     mean_fi,std_fi,mean_coh,std_coh,N = qb.get_average_per_ea(df_trx_results_temp, ea)
-                    # Create a tag for this particular volumetric weight interval
-                    key = 'Vg: ' + str(round(vg_min,1)) + '-' + str(round(vg_max, 1)) + ' kN/m3'
-                    
-                    avg_list.append(pd.DataFrame(index = [key], data = [[vg_min, vg_max, mean_fi, mean_coh, std_fi, std_coh, N]],\
-                        columns=['min(Vg)','max(Vg)','mean(fi)','mean(coh)','std(fi)','std(coh)','N']))
-
+                    df_avg_temp = pd.DataFrame(index = [key], data = [[vg_min, vg_max, mean_fi, mean_coh, std_fi, std_coh, N]],\
+                        columns=['min(Vg)','max(Vg)','mean(fi)','mean(coh)','std(fi)','std(coh)','N'])                    
+                    avg_list.append(df_avg_temp)
+                    # Calculate the least squares estimate of the S en T and add them to a dataframe list
                     fi, coh, E, E_per_n, eps, N = qb.get_least_squares(
                         qb.get_trx_dlp_result(gtm_ids), 
                         ea = ea, 
-                        name = 'Least Squares Analysis, ea: ' + str(ea) + '\n' + key,
+                        plot_name = 'Least Squares Analysis, ea: ' + str(ea) + '\n' + key,
                         show_plot = show_plot, 
                         save_plot = save_plot
                         )
-                    ls_list.append(pd.DataFrame(index = [key], data = [[vg_min, vg_max, fi, coh, E, E_per_n, eps, N]],\
-                        columns=['min(Vg)', 'max(Vg)','fi','coh','Abs. Sq. Err.','Abs. Sq. Err./N','Mean Rel. Err. %','N']))
+                    df_lst_temp = pd.DataFrame(index = [key], data = [[vg_min, vg_max, fi, coh, E, E_per_n, eps, N]],\
+                        columns=['min(Vg)', 'max(Vg)','fi','coh','Abs. Sq. Err.','Abs. Sq. Err./N','Mean Rel. Err. %','N'])
+                    ls_list.append(df_lst_temp)
             if len(ls_list)>0:
                 df_ls_stat = pd.concat(ls_list)
                 df_ls_stat.index.name = 'ea: ' + str(ea) +'%'
@@ -134,25 +133,30 @@ if df_trx is not None:
 
 #Make a copy of an excelsheet that already has the two important NEN 9997 tables in it
 #Could be skipped but pd.ExcelWriter(..., mode = 'a') needs to be put on a write/overwrite mode = 'w' i think
+# Also the engine openpyxl has an append mode but xlsxwriter does not have it 
 shutil.copyfile('NEN 9997.xlsx', output_file)
-
+# At the end of the 'with' function it closes the excelwriter automatically, even if there was an error
 with pd.ExcelWriter(output_file,engine='openpyxl',mode='a') as writer: #writer in append mode so that the NEN tables are kept
     for key in df_dict:
+        # Writing every dataframe in the dictionary to a different sheet
         df_dict[key].to_excel(writer, sheet_name = key)
         
     if df_trx is not None:
+        # Write the multiple dataframes of the same statistical analysis for TRX to the same excel sheet by counting rows
         row = 0
         for key in df_vg_stat_dict:
-            df_vg_stat_dict[key].to_excel(writer, sheet_name = 'Vg statistieken', startrow = row)
+            df_vg_stat_dict[key].to_excel(writer, sheet_name = 'Simpele Vg stat.', startrow = row)
             row = row + len(df_vg_stat_dict[key].index) + 2
-        row=0
-        for key in df_bbn_stat_dict:
-            df_bbn_stat_dict[key].to_excel(writer, sheet_name = 'bbn Statistieken', startrow = row)
-            row = row + len(df_bbn_stat_dict[key].index) + 2
+        # Repeat...
         row=0
         for key in df_lst_sqrs_dict:
-            df_lst_sqrs_dict[key].to_excel(writer, sheet_name = 'Least Squares Statistieken', startrow = row)
+            df_lst_sqrs_dict[key].to_excel(writer, sheet_name = 'Least Squares Vg Stat.', startrow = row)
             row = row + len(df_lst_sqrs_dict[key].index) + 2
+        row=0
+        for key in df_bbn_stat_dict:
+            df_bbn_stat_dict[key].to_excel(writer, sheet_name = 'bbn_kode Stat.', startrow = row)
+            row = row + len(df_bbn_stat_dict[key].index) + 2
+        
 
 os.startfile(output_file)
 

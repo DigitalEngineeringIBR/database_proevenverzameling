@@ -13,14 +13,15 @@ Volume gewicht voor triaxiaal proeven Vgmin Vgmax
 Rek ea voor selectie bij LST-squares voor triaxiaal proeven
 Output file/dir: 'D:\documents\Proeven-Selectie.xlsx'
 '''
-hoogte_selectie = [100, -100] # mNAP
-proef_types = ['CU'] # ['CU','CD','UU']
-volume_gewicht_selectie = [9, 22] # kN/m3
-rek_selectie = [5] # %
-output_location = r'' # Example: D:\Documents\geo_parameters\'
-output_file = 'TRX_Example.xlsx' # Example: TRX_example.xlsx
-show_plot = True # True/False
-save_plot = False # True/False
+if __name__ == "__main__":
+    hoogte_selectie = [100, -100] # mNAP
+    proef_types = ['CU'] # ['CU','CD','UU']
+    volume_gewicht_selectie = [9, 22] # kN/m3
+    rek_selectie = [5] # %
+    output_location = r'' # Example: D:\Documents\geo_parameters\'
+    output_file = 'TRX_Example.xlsx' # Example: TRX_example.xlsx
+    show_plot = True # True/False
+    save_plot = False # True/False
 
 
 import sys, os, shutil

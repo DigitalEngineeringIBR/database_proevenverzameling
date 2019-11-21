@@ -5,7 +5,6 @@ Author: Kevin Schuurman
 E-mail: kevinschuurman98@gmail.com
 Summary: Base functions for qgis_frontend.py, Querying the data from the proeven verzameling database.
 '''
-
 import pandas as pd
 import numpy as np
 import psycopg2 as psy
@@ -22,17 +21,17 @@ def fetch (query, data):
         password = "admin"
         ) as dbcon:
     ## Using an Oracle database:
-    '''
-    with cora.connect(
-       user = "",
-       password = "",
-       dsn = ""*
-        ) as dbcon:
-    # *Can be a: 
-    # 1. Oracle Easy Connect string
-    # 2. Oracle Net Connect Descriptor string
-    # 3. Net Service Name mapping to connect description
-    '''
+        '''
+        with cora.connect(
+        user = "",
+        password = "",
+        dsn = ""*
+            ) as dbcon:
+        # *Can be a: 
+        # 1. Oracle Easy Connect string
+        # 2. Oracle Net Connect Descriptor string
+        # 3. Net Service Name mapping to connect description
+        '''
 
         cur = dbcon.cursor()
         cur.execute(query, data)
@@ -285,7 +284,13 @@ def get_average_per_ea( df_trx_result, ea = 5):
         raise TypeError('No pandas dataframe was supplied.')
 
 # Creating least square fits on TRX_dlp_results
-def get_least_squares( df_trx_dlp_result, plot_name = 'TRX_DLP', ea = 2, show_plot = True, save_plot = False ):
+def get_least_squares( 
+    df_trx_dlp_result, 
+    plot_name = 'Lst_Sqrs_name', 
+    ea = 2, 
+    show_plot = True, 
+    save_plot = False
+    ):
     df = select_on_ea( df_trx_dlp_result, ea)
     data_full = (df.p, df.q)
     ### Begin Least Squares fitting van een 'linear regression'
@@ -353,9 +358,9 @@ def get_least_squares( df_trx_dlp_result, plot_name = 'TRX_DLP', ea = 2, show_pl
             at2.patch.set_boxstyle("round,pad=0.,rounding_size=0.2")
             ax4.add_artist(at2)
 
-        ax.set_title(name)
+        ax.set_title(plot_name)
         ax.legend(loc=2)
-        ax.set_xlabel('$\sigma_n$ Normaalspanning')
+        ax.set_xlabel(r'$\sigma_n$ Normaalspanning')
         ax.set_ylabel(r'$\tau$ Schuifspanning')
         ax.set_xlim(xmin=0)
         ax.set_ylim(ymin=0)
@@ -376,8 +381,7 @@ def get_least_squares( df_trx_dlp_result, plot_name = 'TRX_DLP', ea = 2, show_pl
         if show_plot:
             plt.show()
         if save_plot:
-            print('nothingyet')
-            #save the plot in the directory
+            pass
     return round(np.degrees(fi),1), round(coh,1), round(E), round(E_per_n,1), round(eps*100,1), N
 
 # Querying compression tests\samendrukkingsproeven

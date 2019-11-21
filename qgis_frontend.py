@@ -13,15 +13,15 @@ Volume gewicht voor triaxiaal proeven Vgmin Vgmax
 Rek ea voor selectie bij LST-squares voor triaxiaal proeven
 Output file/dir: 'D:\documents\Proeven-Selectie.xlsx'
 '''
-if __name__ == "__main__":
-    hoogte_selectie = [100, -100] # mNAP
-    proef_types = ['CU'] # ['CU','CD','UU']
-    volume_gewicht_selectie = [9, 22] # kN/m3
-    rek_selectie = [5] # %
-    output_location = r'' # Example: D:\Documents\geo_parameters\'
-    output_file = 'TRX_Example.xlsx' # Example: TRX_example.xlsx
-    show_plot = True # True/False
-    save_plot = False # True/False
+#if __name__ == "__main__":
+hoogte_selectie = [100, -100] # mNAP
+proef_types = ['CU'] # ['CU','CD','UU']
+volume_gewicht_selectie = [9, 22] # kN/m3
+rek_selectie = [5] # %
+output_location = r'D:\Documents\Projects\EXCEL BIS STAT' # Example: D:\Documents\geo_parameters\'
+output_file = 'TRX_Example.xlsx' # Example: TRX_example.xlsx
+show_plot = True # True/False
+save_plot = False # True/False
 
 
 import sys, os, shutil
@@ -33,6 +33,12 @@ from qgis.utils import iface
 import qgis_backend as qb
 import pandas as pd
 import numpy as np
+import openpyxl
+
+# Check if the directory still has to be made.
+if os.path.isdir(output_location) == False:
+    os.mkdir(output_location)
+
 #Get the active layer from QGIS
 active_layer = iface.activeLayer()
 # Extract the loc ids from the selected points in the active layer
@@ -132,12 +138,22 @@ if df_trx is not None:
                 df_bbn_stat.index.name = 'ea: ' + str(ea) +'%'
                 df_bbn_stat_dict.update({ str(ea) + r'% rek per BBN code':df_bbn_stat})
 
-#Make a copy of an excelsheet that already has the two important NEN 9997 tables in it
-#Could be skipped but pd.ExcelWriter(..., mode = 'a') needs to be put on a write/overwrite mode = 'w' i think
-# Also the engine openpyxl has an append mode but xlsxwriter does not have it 
-shutil.copyfile('NEN 9997.xlsx', output_file)
+# Check if the .xlsx file exists
+output_file_dir = os.path.join(output_location, output_file)
+if os.path.exists(output_file_dir) == False:
+    book = openpyxl.Workbook()
+    book.save(output_file_dir)
+else:
+    name, ext = output_file.split('.')
+    i = 1
+    while os.path.exists(os.path.join(output_location, name + '{}.'.format(i) + ext)):
+        i += 1
+    output_file_dir = os.path.join(output_location, name + '{}.'.format(i) + ext)
+    book = openpyxl.Workbook()
+    book.save(output_file_dir)
+
 # At the end of the 'with' function it closes the excelwriter automatically, even if there was an error
-with pd.ExcelWriter(output_file,engine='openpyxl',mode='a') as writer: #writer in append mode so that the NEN tables are kept
+with pd.ExcelWriter(output_file_dir,engine='openpyxl',mode='w') as writer: #writer in append mode so that the NEN tables are kept
     for key in df_dict:
         # Writing every dataframe in the dictionary to a different sheet
         df_dict[key].to_excel(writer, sheet_name = key)
@@ -159,5 +175,5 @@ with pd.ExcelWriter(output_file,engine='openpyxl',mode='a') as writer: #writer i
             row = row + len(df_bbn_stat_dict[key].index) + 2
         
 
-os.startfile(output_file)
+os.startfile(output_file_dir)
 

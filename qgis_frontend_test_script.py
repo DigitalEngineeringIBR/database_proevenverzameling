@@ -3,7 +3,7 @@ Script: qgis_frontend_test_script.py
 Repository: https://github.com/KRS-dev/proeven_verzameling
 Author: Kevin Schuurman
 E-mail: kevinschuurman98@gmail.com
-Summary: Frontend test script that can run without QGIS
+Summary: Frontend test script to use without qgis
 '''
 '''
 Inputs:
@@ -11,17 +11,18 @@ hoogte selectie voor ALLE monsters Zbot en Ztop
 Proef types voor triaxiaal proeven: ['CU','UU', 'CD']
 Volume gewicht voor triaxiaal proeven Vgmin Vgmax
 Rek ea voor selectie bij LST-squares voor triaxiaal proeven
-Output file/dir: 'D:\documents\Proeven-Selectie.xlsx'
+Output file/dir: r'D:\documents\Proeven-Selectie.xlsx'
 '''
 if __name__ == "__main__":
     hoogte_selectie = [100, -100] # mNAP
     proef_types = ['CU'] # ['CU','CD','UU']
     volume_gewicht_selectie = [9, 22] # kN/m3
     rek_selectie = [5] # %
-    output_location = r'' # Example: D:\Documents\geo_parameters\'
+    output_location = r'D:\Documents\Projects\EXCEL BIS STAT' # Example: D:\Documents\geo_parameters\'
     output_file = 'TRX_Example.xlsx' # Example: TRX_example.xlsx
-    show_plot = True # True/False
+    show_plot = False # True/False
     save_plot = False # True/False
+    loc_ids = [143800, 144566, 144584, 142998, 140980, 48565, 160833, 160838, 160847, 160856, 156721, 156724, 156726, 156728, 138341, 138353, 100652, 140976, 143018, 156720, 198019, 210119, 258134, 270183, 270201, 270518, 270520, 270521, 265149, 262493, 285429, 285431, 285434, 285435, 290032, 297470, 297474, 340699, 340703, 48107, 48563, 48566, 91546, 90312, 107300, 100651, 138342, 138343, 144613]
 
 
 import sys, os, shutil
@@ -29,12 +30,14 @@ import sys, os, shutil
 os.chdir(r'D:\Documents\GitHub\proeven_verzameling')
 # Adding the same path to the python system so that qgis_backend can be imported
 sys.path.append(r'D:\Documents\GitHub\proeven_verzameling')
-from qgis.utils import iface
 import qgis_backend as qb
 import pandas as pd
 import numpy as np
+import openpyxl
 
-loc_ids = [143800, 144566, 144584, 142998, 140980, 48565, 160833, 160838, 160847, 160856, 156721, 156724, 156726, 156728, 138341, 138353, 100652, 140976, 143018, 156720, 198019, 210119, 258134, 270183, 270201, 270518, 270520, 270521, 265149, 262493, 285429, 285431, 285434, 285435, 290032, 297470, 297474, 340699, 340703, 48107, 48563, 48566, 91546, 90312, 107300, 100651, 138342, 138343, 144613]
+# Check if the directory still has to be made.
+if os.path.isdir(output_location) == False:
+    os.mkdir(output_location)
 
 # Get all meetpunten related to these loc_ids
 df_meetp = qb.get_meetpunten(loc_ids)
@@ -131,12 +134,23 @@ if df_trx is not None:
                 df_bbn_stat.index.name = 'ea: ' + str(ea) +'%'
                 df_bbn_stat_dict.update({ str(ea) + r'% rek per BBN code':df_bbn_stat})
 
-#Make a copy of an excelsheet that already has the two important NEN 9997 tables in it
-#Could be skipped but pd.ExcelWriter(..., mode = 'a') needs to be put on a write/overwrite mode = 'w' i think
-# Also the engine openpyxl has an append mode but xlsxwriter does not have it 
-shutil.copyfile('NEN 9997.xlsx', output_file)
+
+# Check if the .xlsx file exists
+output_file_dir = os.path.join(output_location, output_file)
+if os.path.exists(output_file_dir) == False:
+    book = openpyxl.Workbook()
+    book.save(output_file_dir)
+else:
+    name, ext = output_file.split('.')
+    i = 1
+    while os.path.exists(os.path.join(output_location, name + '{}.'.format(i) + ext)):
+        i += 1
+    output_file_dir = os.path.join(output_location, name + '{}.'.format(i) + ext)
+    book = openpyxl.Workbook()
+    book.save(output_file_dir)
+
 # At the end of the 'with' function it closes the excelwriter automatically, even if there was an error
-with pd.ExcelWriter(output_file,engine='openpyxl',mode='a') as writer: #writer in append mode so that the NEN tables are kept
+with pd.ExcelWriter(output_file_dir,engine='openpyxl',mode='w') as writer: #writer in append mode so that the NEN tables are kept
     for key in df_dict:
         # Writing every dataframe in the dictionary to a different sheet
         df_dict[key].to_excel(writer, sheet_name = key)
@@ -157,6 +171,5 @@ with pd.ExcelWriter(output_file,engine='openpyxl',mode='a') as writer: #writer i
             df_bbn_stat_dict[key].to_excel(writer, sheet_name = 'bbn_kode Stat.', startrow = row)
             row = row + len(df_bbn_stat_dict[key].index) + 2
         
-
-os.startfile(output_file)
+os.startfile(output_file_dir)
 

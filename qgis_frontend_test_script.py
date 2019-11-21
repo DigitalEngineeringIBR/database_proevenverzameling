@@ -70,7 +70,11 @@ if df_trx is not None:
         if (maxvg-minvg)/N > cutoff:
             Vg_linspace = np.linspace(minvg, maxvg, N)
         else:
-            Vg_linspace = np.linspace(minvg, maxvg, round((maxvg-minvg)/cutoff))
+            N = round((maxvg-minvg)/cutoff)
+            if N < 2:
+                Vg_linspace = np.linspace(minvg, maxvg, 2)
+            else:
+                Vg_linspace = np.linspace(minvg, maxvg, N)
         
         Vgmax = Vg_linspace[1:]
         Vgmin = Vg_linspace[0:-1]

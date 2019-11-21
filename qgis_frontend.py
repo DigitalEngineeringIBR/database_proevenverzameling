@@ -16,8 +16,8 @@ Output file/dir: 'D:\documents\Proeven-Selectie.xlsx'
 #if __name__ == "__main__":
 hoogte_selectie = [100, -100] # mNAP
 proef_types = ['CU'] # ['CU','CD','UU']
-volume_gewicht_selectie = [9, 22] # kN/m3
-rek_selectie = [5] # %
+volume_gewicht_selectie = [19, 22] # kN/m3
+rek_selectie = [2] # %
 output_location = r'D:\Documents\Projects\EXCEL BIS STAT' # Example: D:\Documents\geo_parameters\'
 output_file = 'TRX_Example.xlsx' # Example: TRX_example.xlsx
 show_plot = True # True/False
@@ -74,7 +74,11 @@ if df_trx is not None:
         if (maxvg-minvg)/N > cutoff:
             Vg_linspace = np.linspace(minvg, maxvg, N)
         else:
-            Vg_linspace = np.linspace(minvg, maxvg, round((maxvg-minvg)/cutoff))
+            N = round((maxvg-minvg)/cutoff)
+            if N < 2:
+                Vg_linspace = np.linspace(minvg, maxvg, 2)
+            else:
+                Vg_linspace = np.linspace(minvg, maxvg, N)
         
         Vgmax = Vg_linspace[1:]
         Vgmin = Vg_linspace[0:-1]

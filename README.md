@@ -49,4 +49,4 @@ os.chdir(os.path.abspath(r'D:\documents\Github\proeven_verzameling'))
 ```
 ## Usage
 1. Select your points on **BIS_GRAF_LOC_AANDUIDINGEN**
-2. Click run *qgis_frontend.py* inside the QGIS Python shell and you are good to go!
+2. Run *qgis_frontend.py* inside the QGIS Python shell and you are good to go!

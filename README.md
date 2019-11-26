@@ -13,9 +13,9 @@ E-mail: kevinschuurman98@gmail.com
 * psycop2g
 * cx_Oracle or pyodbc (Oracle database)
 3. Create a QGIS project with a connection to the database in 1.
-4. Import the 'BIS_GRAF_LOC_AANDUIDINGEN' into your project.
-5. Copy qgis_frontend.py and qgis_backend.py into your personal python scripts folder.
-6. Edit the following line in qgis_frontend.py so that it refers to the location where the scripts are located.
+4. Import the **BIS_GRAF_LOC_AANDUIDINGEN** into your project.
+5. Copy *qgis_frontend.py* and *qgis_backend.py* into your personal python scripts folder.
+6. Edit the following line in *qgis_frontend.py* so that it refers to the location where the scripts are located.
 ```python 
 os.chdir(os.path.abspath(r'D:\documents\Github\proeven_verzameling'))
 ``` 
@@ -48,5 +48,5 @@ os.chdir(os.path.abspath(r'D:\documents\Github\proeven_verzameling'))
           '''
 ```
 ## Usage
-1. Select your points on 'BIS_GRAF_LOC_AANDUIDINGEN'
-2. Click run qgis_frontend.py inside the QGIS Python shell and you are good to go!
+1. Select your points on **BIS_GRAF_LOC_AANDUIDINGEN**
+2. Click run *qgis_frontend.py* inside the QGIS Python shell and you are good to go!

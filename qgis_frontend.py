@@ -19,21 +19,21 @@ proef_types = ['CU'] # ['CU','CD','UU']
 volume_gewicht_selectie = [19, 22] # kN/m3
 rek_selectie = [2] # %
 output_location = r'D:\Documents\Projects\EXCEL BIS STAT' # Example: D:\Documents\geo_parameters\'
-output_file = 'TRX_Example.xlsx' # Example: TRX_example.xlsx
+output_file = 'TRX_Example.xls' # Example: TRX_example.xlsx
 show_plot = True # True/False
 save_plot = False # True/False
 
 
 import sys, os, shutil
-# Change the directory so the script can open all files in this directory easily
-os.chdir(r'D:\Documents\GitHub\proeven_verzameling')
+# Change the directory to the directory of the current script
+os.chdir(os.path.abspath(__file__))
 # Adding the same path to the python system so that qgis_backend can be imported
-sys.path.append(r'D:\Documents\GitHub\proeven_verzameling')
+sys.path.append(os.path.abspath(__file__))
 from qgis.utils import iface
 import qgis_backend as qb
 import pandas as pd
 import numpy as np
-import openpyxl
+import xlwt
 
 # Check if the directory still has to be made.
 if os.path.isdir(output_location) == False:
@@ -144,20 +144,16 @@ if df_trx is not None:
 
 # Check if the .xlsx file exists
 output_file_dir = os.path.join(output_location, output_file)
-if os.path.exists(output_file_dir) == False:
-    book = openpyxl.Workbook()
-    book.save(output_file_dir)
-else:
+if os.path.exists(output_file_dir):
     name, ext = output_file.split('.')
     i = 1
     while os.path.exists(os.path.join(output_location, name + '{}.'.format(i) + ext)):
         i += 1
     output_file_dir = os.path.join(output_location, name + '{}.'.format(i) + ext)
-    book = openpyxl.Workbook()
-    book.save(output_file_dir)
+
 
 # At the end of the 'with' function it closes the excelwriter automatically, even if there was an error
-with pd.ExcelWriter(output_file_dir,engine='openpyxl',mode='w') as writer: #writer in append mode so that the NEN tables are kept
+with pd.ExcelWriter(output_file_dir,engine='xlwt',mode='w') as writer: #writer in append mode so that the NEN tables are kept
     for key in df_dict:
         # Writing every dataframe in the dictionary to a different sheet
         df_dict[key].to_excel(writer, sheet_name = key)

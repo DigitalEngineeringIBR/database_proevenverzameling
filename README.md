@@ -1,8 +1,8 @@
 # proeven_verzameling
-BIS oracle database tool for use within QGIS
-
-Kevin Schuurman
-kevinschuurman98@gmail.com
+BIS oracle database tool for use within QGIS  
+Repository: https://github.com/KRS-dev/proeven_verzameling  
+Author: Kevin Schuurman  
+E-mail: kevinschuurman98@gmail.com  
 
 ## Installation 
 1. Have a PostgreSQL/Oracle Bis database copy running on your PC or know how to connect to one remotely. A PostgreSQL dump can be downloaded from within the repository in the directory 'Database_dump'
@@ -47,6 +47,6 @@ os.chdir(os.path.abspath(r'D:\documents\Github\proeven_verzameling'))
           # 3. Net Service Name mapping to connect description
           '''
 ```
-#Usage
+## Usage
 1. Select your points on 'BIS_GRAF_LOC_AANDUIDINGEN'
 2. Click run qgis_frontend.py inside the QGIS Python shell and you are good to go!

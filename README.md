@@ -7,11 +7,11 @@ E-mail: kevinschuurman98@gmail.com
 ## Installation 
 1. Have a PostgreSQL/Oracle Bis database copy running on your PC or know how to connect to one remotely. A PostgreSQL dump can be downloaded from within the repository in the directory 'Database_dump'
 2. Install needed modules. Express installation of QGIS (3.0+) should have most of those pre-installed apart from possibly pandas and cx_Oracle.
-* pandas
-* numpy
-* xlwt
-* psycop2g
-* cx_Oracle or pyodbc (Oracle database)
+* *pandas*
+* *numpy*
+* *xlwt*
+* *psycop2g*
+* *cx_Oracle or pyodbc* (Oracle database)
 3. Create a QGIS project with a connection to the database in 1.
 4. Import the **BIS_GRAF_LOC_AANDUIDINGEN** into your project.
 5. Copy *qgis_frontend.py* and *qgis_backend.py* into your personal python scripts folder.

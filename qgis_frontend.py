@@ -13,7 +13,6 @@ Volume gewicht voor triaxiaal proeven Vgmin Vgmax
 Rek ea voor selectie bij LST-squares voor triaxiaal proeven
 Output file/dir: 'D:\documents\Proeven-Selectie.xlsx'
 '''
-#if __name__ == "__main__":
 hoogte_selectie = [100, -100] # mNAP
 proef_types = ['CU'] # ['CU','CD','UU']
 volume_gewicht_selectie = [10, 22] # kN/m3
@@ -27,6 +26,7 @@ save_plot = False # True/False
 import sys, os, shutil
 # Change the working directory to the directory of the current script so that qgis_backend can be imported
 os.chdir(os.path.abspath(r'D:\documents\Github\proeven_verzameling'))
+
 from qgis.utils import iface
 import qgis_backend as qb
 import pandas as pd

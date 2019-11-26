@@ -25,7 +25,7 @@ def fetch (query, data):
         ) as dbcon:
     ## Using an Oracle database:
         '''
-        with cora.connect(
+    with cora.connect(
         user = "",
         password = "",
         dsn = ""*

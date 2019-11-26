@@ -1,5 +1,5 @@
 # proeven_verzameling
-BIS oracle database tool for use within QGIS  
+BIS database query tool for use within QGIS  
 Repository: https://github.com/KRS-dev/proeven_verzameling  
 Author: Kevin Schuurman  
 E-mail: kevinschuurman98@gmail.com  

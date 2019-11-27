@@ -69,9 +69,9 @@ def get_meetpunten( loc_ids ):
         if len( loc_ids ) > 0:
             if( all( isinstance(x, int) for x in loc_ids )):
                 values = tuple(loc_ids)
-                query = 'SELECT * FROM graf_loc_aanduidingen '\
-                    + 'INNER JOIN meetpunten ON meetpunten.mpt_id = graf_loc_aanduidingen.loc_id '\
-                    + 'WHERE graf_loc_aanduidingen.loc_id IN %s'
+                query = 'SELECT * FROM bis_graf_loc_aanduidingen '\
+                    + 'INNER JOIN bis_meetpunten ON meetpunten.mpt_id = bis_graf_loc_aanduidingen.loc_id '\
+                    + 'WHERE bis_graf_loc_aanduidingen.loc_id IN %s'
                 fetched, description = fetch(query, (values,))
 
                 if (0 < len(fetched)):
@@ -98,7 +98,7 @@ def get_geo_dossiers(gds_ids):
         if len(gds_ids) > 0:
             if(all(isinstance(x, int) for x in gds_ids)):
                 values = tuple( gds_ids )
-                query = 'SELECT * FROM geo_dossiers WHERE gds_id IN %s'
+                query = 'SELECT * FROM bis_geo_dossiers WHERE gds_id IN %s'
                 fetched, description = fetch(query, (values,))
                 if ( 0 < len( fetched )):
                     geod_df = pd.DataFrame(fetched)
@@ -121,7 +121,7 @@ def get_geotech_monsters( bor_ids ):
         if len( bor_ids ) > 0:
             if( all( isinstance( x, (int)) for x in bor_ids )):
                 values = tuple(bor_ids)
-                query = 'SELECT * FROM geotech_monsters WHERE bor_id IN %s'
+                query = 'SELECT * FROM bis_geotech_monsters WHERE bor_id IN %s'
                 fetched, description = fetch(query, (values,))
                 if( len( fetched ) > 0 ):
                     g_mon_df = pd.DataFrame( fetched )
@@ -155,7 +155,7 @@ def get_trx( gtm_ids, proef_type = ('CD') ):
                 if all( isinstance( x, ( int )) for x in gtm_ids ):
                     values = tuple(gtm_ids)
                     proef_type = tuple(proef_type)
-                    query = 'SELECT * FROM trx WHERE proef_type IN %s AND gtm_id IN %s'
+                    query = 'SELECT * FROM bis_trx_proeven WHERE proef_type IN %s AND gtm_id IN %s'
                     fetched, description = fetch(query, (proef_type, values))
                     if( len( fetched ) > 0 ):
                         trx_df = pd.DataFrame(fetched)
@@ -198,7 +198,7 @@ def get_trx_result( gtm_ids ):
         if len( gtm_ids ) > 0:    
             if all(isinstance(x, (int)) for x in gtm_ids):
                 values = tuple( gtm_ids )
-                query = 'SELECT * FROM trx_result WHERE gtm_id IN %s' 
+                query = 'SELECT * FROM bis_trx_proef_result WHERE gtm_id IN %s' 
                 fetched, description = fetch(query, (values,))
                 if( len( fetched ) > 0 ):
                     trx_result_df = pd.DataFrame(fetched)
@@ -222,7 +222,7 @@ def get_trx_dlp( gtm_ids ):
         if len( gtm_ids ) > 0: 
             if all(isinstance(x, (int)) for x in gtm_ids):
                 values = tuple( gtm_ids )
-                query = 'SELECT * FROM trx_dlp WHERE gtm_id IN %s' 
+                query = 'SELECT * FROM bis_trx_dlp WHERE gtm_id IN %s' 
                 fetched, description = fetch(query, (values,))
                 if( len( fetched ) > 0 ):
                     trx_dlp = pd.DataFrame(fetched)
@@ -246,7 +246,7 @@ def get_trx_dlp_result( gtm_ids ):
         if len( gtm_ids ) > 0:
             if all(isinstance(x, (int)) for x in gtm_ids):
                 values = tuple( gtm_ids )
-                query = 'SELECT * FROM trx_dlp_result WHERE gtm_id IN %s' 
+                query = 'SELECT * FROM bis_trx_dlp_result WHERE gtm_id IN %s' 
                 fetched, description = fetch(query, (values,))
                 if( len( fetched ) > 0 ):
                     trx_dlp_result = pd.DataFrame(fetched)
@@ -393,7 +393,7 @@ def get_sdp( gtm_ids ):
         if len( gtm_ids ) > 0:
             if all(isinstance(x, (int)) for x in gtm_ids):
                 values = tuple( gtm_ids )
-                query = 'SELECT * FROM sdp WHERE gtm_id IN %s'
+                query = 'SELECT * FROM bis_sdp WHERE gtm_id IN %s'
                 fetched, description = fetch(query, (values,))
                 if( len( fetched ) > 0 ):
                     sdp_df = pd.DataFrame(fetched)
@@ -418,7 +418,7 @@ def get_sdp_result( gtm_ids ):
         if len( gtm_ids ) > 0: 
             if all(isinstance(x, (int)) for x in gtm_ids):
                 values = tuple( gtm_ids )
-                query = 'SELECT * FROM sdp_result WHERE gtm_id IN %s'
+                query = 'SELECT * FROM bis_sdp_resultaten WHERE gtm_id IN %s'
                 fetched, description = fetch(query, (values,))
                 if( len( fetched ) > 0 ):
                     sdp_result_df = pd.DataFrame(fetched)
@@ -444,12 +444,12 @@ def join_trx_with_trx_results( gtm_ids, proef_type = 'CD' ):
 
                 values = tuple(gtm_ids)
                 #values_str = '(' + ','.join(str(i) for i in values).strip(',') + ')'
-                query = 'SELECT trx.gtm_id, volumegewicht_droog, volumegewicht_nat, ' \
+                query = 'SELECT bis_trx_proeven.gtm_id, volumegewicht_droog, volumegewicht_nat, ' \
                     + 'watergehalte, terreinspanning, bezwijksnelheid, trx_result.trx_volgnr, ea, '\
-                    + 'coh, fi FROM trx ' \
-                    + 'INNER JOIN trx_result ON trx.gtm_id = trx_result.gtm_id '\
-                    + 'AND trx.trx_volgnr = trx_result.trx_volgnr '\
-                    + 'WHERE proef_type = %s AND trx.gtm_id IN %s'
+                    + 'coh, fi FROM bis_trx_proeven ' \
+                    + 'INNER JOIN bis_trx_proef_result ON bis_trx_proeven.gtm_id = bis_trx_proef_result.gtm_id '\
+                    + 'AND bis_trx_proeven.trx_volgnr = bis_trx_proef_result.trx_volgnr '\
+                    + 'WHERE proef_type = %s AND bis_trx_proeven.gtm_id IN %s'
                 fetched, description = fetch(query, (proef_type, values))
                 if( len( fetched ) > 0 ):
                     trx_df = pd.DataFrame(fetched)

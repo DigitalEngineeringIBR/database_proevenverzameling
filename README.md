@@ -5,17 +5,18 @@ Author: Kevin Schuurman
 E-mail: kevinschuurman98@gmail.com  
 
 ## Installation 
-1. Have a PostgreSQL/Oracle Bis database copy running on your PC or know how to connect to one remotely. A PostgreSQL dump can be downloaded from within the repository in the directory 'Database_dump'
-2. Install needed modules. Express installation of QGIS (3.0+) should have most of those pre-installed apart from possibly *pandas* and *cx_Oracle*.
+1.  Have a PostgreSQL/Oracle Bis database copy running on your PC or know how to connect to one remotely. A PostgreSQL dump can be downloaded from within the repository in the directory 'Database_dump'. The dump is encrypted, e-mail me at kevinschuurman98@gmail.com to get the encryption key. You can install PostgreSQL with a suitable IDE to restore the dump and have the database running on your local pc. The standard install from PostgreSQL comes with PgAdmin which is fine.
+2. Install QGIS
+3. Install the needed modules in QGIS. Express installation of QGIS (3.0+) should have most of those pre-installed apart from possibly *pandas* and *cx_Oracle*.
 * *pandas*
 * *numpy*
 * *xlwt*
 * *psycop2g*
 * *cx_Oracle or pyodbc* (Oracle database)
-3. Create a QGIS project with a connection to the database in 1.
-4. Import the **BIS_GRAF_LOC_AANDUIDINGEN** into your project.
-5. Copy *qgis_frontend.py* and *qgis_backend.py* into your personal python scripts folder.
-6. Edit the following line in *qgis_frontend.py* so that it refers to the location where the scripts are located.
+4. Create a QGIS project with a connection to the database in 1.
+5. Import the **BIS_GRAF_LOC_AANDUIDINGEN** into your project.
+6. Copy *qgis_frontend.py* and *qgis_backend.py* into your personal python scripts folder.
+7. Edit the following line in *qgis_frontend.py* so that it refers to the location where the scripts are located.
 ```python 
 os.chdir(os.path.abspath(r'D:\documents\Github\proeven_verzameling'))
 ``` 

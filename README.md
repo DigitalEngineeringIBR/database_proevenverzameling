@@ -48,6 +48,7 @@ os.chdir(os.path.abspath(r'D:\documents\Github\proeven_verzameling'))
           # 3. Net Service Name mapping to connect description
           '''
 ```
+8. Restart QGIS to reload all modules. (Updating *qgis_backend.py*)
 ## Usage
 1. Select your points on **BIS_GRAF_LOC_AANDUIDINGEN**
 2. Run *qgis_frontend.py* inside the QGIS Python shell and you are good to go!

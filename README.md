@@ -51,4 +51,5 @@ os.chdir(os.path.abspath(r'D:\documents\Github\proeven_verzameling'))
 8. Restart QGIS to reload all modules. (Updating *qgis_backend.py*)
 ## Usage
 1. Select your points on **BIS_GRAF_LOC_AANDUIDINGEN**
-2. Run *qgis_frontend.py* inside the QGIS Python shell and you are good to go!
+2. Edit all the inputs in *qgis_frontend.py* to your liking!
+3. Run *qgis_frontend.py* inside the QGIS Python shell and you are good to go!

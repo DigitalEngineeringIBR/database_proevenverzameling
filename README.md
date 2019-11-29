@@ -5,7 +5,7 @@ Author: Kevin Schuurman
 E-mail: kevinschuurman98@gmail.com  
 
 ## Installation 
-1.  Have a PostgreSQL/Oracle Bis database copy running on your PC or know how to connect to one remotely. A PostgreSQL dump can be downloaded from within the repository in the directory 'Database_dump'. The dump is encrypted, e-mail me at kevinschuurman98@gmail.com to get the encryption key. You can install PostgreSQL with a suitable IDE to restore the dump and have the database running on your local pc. The standard install from PostgreSQL comes with PgAdmin which is fine.
+1.  Have a PostgreSQL/Oracle Bis database copy running on your PC or know how to connect to one remotely. A PostgreSQL dump can be downloaded from within the repository in the directory 'Database_dump'. The dump is encrypted, e-mail me at kevinschuurman98@gmail.com to get the encryption key. You can install PostgreSQL with a suitable IDE to restore the dump and have the database running on your local pc. The standard install from PostgreSQL comes with PgAdmin which is fine. **Note: The geometry data in graf_loc_aanduidingen requires PostgreSQL to have a spatial extension called PostGIS. The extension can be easily installed through the stack builder that comes with the PostgreSQL install.**
 2. Install QGIS
 3. Install the needed modules in QGIS. Express installation of QGIS (3.0+) should have most of those pre-installed apart from possibly *pandas* and *cx_Oracle*.
 * *pandas*

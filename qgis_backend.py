@@ -20,6 +20,8 @@ def fetch (query, data):
     with psy.connect(
         host = "localhost",
         database = "bis",
+        user = "",
+        password = ""
         ) as dbcon:
     ## Using an Oracle database:
         '''

@@ -151,7 +151,7 @@ def select_on_z_coord( g_mon_df, zmax, zmin ):
         if new_g_mon_df is not None:
             return new_g_mon_df
         else:
-            print('Between ' + zmax ' and ' + zmin + 'm there are no GEO_Monsters found.')
+            print('Between ' + zmax + ' and ' + zmin + 'm there are no GEO_Monsters found.')
     else:
          raise TypeError('No pandas dataframe was supplied')
 

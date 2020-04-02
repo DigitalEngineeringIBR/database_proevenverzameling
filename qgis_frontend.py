@@ -59,7 +59,8 @@ if df_sdp is not None:
     df_dict.update({'BIS_SDP_Proeven':df_sdp, 'BIS_SDP_Resultaten':df_sdp_result})
 
 df_trx = qb.get_trx(df_gm_filt_on_z.GTM_ID, proef_type = proef_types)
-df_trx = qb.select_on_vg(df_trx, volume_gewicht_selectie[1], volume_gewicht_selectie[0])
+if df_trx is not None:
+    df_trx = qb.select_on_vg(df_trx, volume_gewicht_selectie[1], volume_gewicht_selectie[0])
 if df_trx is not None:
     # Get all TRX results, TRX deelproeven and TRX deelproef results
     df_trx_results = qb.get_trx_result(df_trx.GTM_ID)

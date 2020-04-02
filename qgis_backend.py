@@ -135,8 +135,8 @@ def get_geotech_monsters( bor_ids ):
                     g_mon_df['Z_COORDINAAT_LAAG'] = pd.to_numeric( g_mon_df['Z_COORDINAAT_LAAG'] )
                     return g_mon_df
                 else:
-                    raise ValueError('These selected boring(en): ' + str(values) + \
-                    ' do not contain any triaxiaal proeven.')
+                    print('These selected boring(en): ' + str(values) + \
+                    ' do not contain any GEO_Monsters.')
             else:
                 raise TypeError('not all inputs are integers')
         else:
@@ -148,7 +148,10 @@ def get_geotech_monsters( bor_ids ):
 def select_on_z_coord( g_mon_df, zmax, zmin ):
     if isinstance( g_mon_df, pd.DataFrame ):
         new_g_mon_df = g_mon_df[( zmax > g_mon_df.Z_COORDINAAT_LAAG ) & ( g_mon_df.Z_COORDINAAT_LAAG > zmin )]
-        return new_g_mon_df
+        if new_g_mon_df is not None:
+            return new_g_mon_df
+        else:
+            print('Between ' + zmax ' and ' + zmin + 'm there are no GEO_Monsters found.')
     else:
          raise TypeError('No pandas dataframe was supplied')
 
@@ -198,7 +201,10 @@ def select_on_vg( trx_df, Vg_max = 20, Vg_min = 17, soort ='nat' ):
         else:
             raise TypeError('\'' + soort + '\' is not allowed as argument for soort,\
                  only \'nat\' and \'droog\' are allowed.')
-        return new_trx_df
+        if new_trx_df is not None:         
+            return new_trx_df
+        else:
+            print('Between: \'' + Vg_max + '\' and \'' + Vg_min + '\' kg/m3 there are no GEO_Monsters found')
     else:
         raise TypeError('No pandas dataframe was supplied')
 
@@ -335,7 +341,7 @@ def get_least_squares(
 
     
     if show_plot or save_plot:
-        dlp1, dlp2, dlp3 = df[(df.DEELPROEF_NUMMER == 1)], df[(df.DEELPROEF_NUMMER == 2)], df[(df.DEELPROEF_NUMMER == 3)]
+        dlp1, dlp2, dlp3 = df[(df.TDP_DEELPROEF_NUMMER == 1)], df[(df.TDP_DEELPROEF_NUMMER == 2)], df[(df.TDP_DEELPROEF_NUMMER == 3)]
         data_colors = ((dlp1.P, dlp1.Q, dlp1.GTM_ID), (dlp2.P, dlp2.Q, dlp2.GTM_ID), (dlp3.P, dlp3.Q, dlp3.GTM_ID))
         colors = ('red', 'green', 'blue')
         dlp_label = ('dlp 1', 'dlp 2', 'dlp 3')

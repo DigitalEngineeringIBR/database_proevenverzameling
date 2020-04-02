@@ -79,9 +79,9 @@ def get_meetpunten( loc_ids ):
                     meetp_df = pd.DataFrame(fetched)
                     colnames = [desc[0] for desc in description]
                     meetp_df.columns = colnames
-                    meetp_df.gds_id = meetp_df.gds_id.fillna(0)
-                    meetp_df.gds_id = pd.to_numeric(
-                        meetp_df.gds_id, downcast='integer')
+                    meetp_df.GDS_ID = meetp_df.GDS_ID.fillna(0)
+                    meetp_df.GDS_ID = pd.to_numeric(
+                        meetp_df.GDS_ID, downcast='integer')
                     return meetp_df
                 else:
                     raise ValueError(
@@ -130,7 +130,7 @@ def get_geotech_monsters( bor_ids ):
                     g_mon_df = pd.DataFrame( fetched )
                     colnames = [ desc[0] for desc in description ]
                     g_mon_df.columns = colnames
-                    g_mon_df['z_coordinaat_laag'] = pd.to_numeric( g_mon_df['z_coordinaat_laag'] )
+                    g_mon_df['Z_COORDINAAT_LAAG'] = pd.to_numeric( g_mon_df['Z_COORDINAAT_LAAG'] )
                     return g_mon_df
                 else:
                     raise ValueError('These selected boring(en): ' + str(values) + \
@@ -145,7 +145,7 @@ def get_geotech_monsters( bor_ids ):
 # Filter on height of the Geotechnical monsters        
 def select_on_z_coord( g_mon_df, zmax, zmin ):
     if isinstance( g_mon_df, pd.DataFrame ):
-        new_g_mon_df = g_mon_df[( zmax > g_mon_df.z_coordinaat_laag ) & ( g_mon_df.z_coordinaat_laag > zmin )]
+        new_g_mon_df = g_mon_df[( zmax > g_mon_df.Z_COORDINAAT_LAAG ) & ( g_mon_df.Z_COORDINAAT_LAAG > zmin )]
         return new_g_mon_df
     else:
          raise TypeError('No pandas dataframe was supplied')
@@ -190,9 +190,9 @@ def select_on_vg( trx_df, Vg_max = 20, Vg_min = 17, soort ='nat' ):
     #Volume gewicht y in kN/m3
     if isinstance(trx_df, pd.DataFrame):
         if soort == 'nat':
-            new_trx_df = trx_df[(Vg_max >= trx_df.volumegewicht_nat) & (trx_df.volumegewicht_nat >= Vg_min)]
+            new_trx_df = trx_df[(Vg_max >= trx_df.VOLUMEGEWICHT_NAT) & (trx_df.VOLUMEGEWICHT_NAT >= Vg_min)]
         elif soort == 'droog':
-            new_trx_df = trx_df[(Vg_max >= trx_df.volumegewicht_droog) & (trx_df.volumegewicht_droog >= Vg_min)]
+            new_trx_df = trx_df[(Vg_max >= trx_df.VOLUMEGEWICHT_DROOG) & (trx_df.VOLUMEGEWICHT_DROOG >= Vg_min)]
         else:
             raise TypeError('\'' + soort + '\' is not allowed as argument for soort,\
                  only \'nat\' and \'droog\' are allowed.')
@@ -213,7 +213,7 @@ def get_trx_result( gtm_ids ):
                     trx_result_df = pd.DataFrame(fetched)
                     colnames = [desc[0] for desc in description]
                     trx_result_df.columns = colnames
-                    trx_result_df[['ea','coh','fi']] = trx_result_df[['ea','coh','fi']].apply(pd.to_numeric)
+                    trx_result_df[['EA','COH','FI']] = trx_result_df[['EA','COH','FI']].apply(pd.to_numeric)
                     return trx_result_df
                 else:
                     print('These selected boring(en): ' + str(values) + \
@@ -238,7 +238,7 @@ def get_trx_dlp( gtm_ids ):
                     trx_dlp = pd.DataFrame(fetched)
                     colnames = [desc[0] for desc in description]
                     trx_dlp.columns = colnames
-                    trx_dlp.loc[:,'eps50':] = trx_dlp.loc[:,'eps50':].apply(pd.to_numeric)
+                    trx_dlp.loc[:,'EPS50':] = trx_dlp.loc[:,'EPS50':].apply(pd.to_numeric)
                     return trx_dlp
                 else:
                     print('These selected geomonsters: ' + str(values) + \
@@ -263,8 +263,8 @@ def get_trx_dlp_result( gtm_ids ):
                     trx_dlp_result = pd.DataFrame(fetched)
                     colnames = [desc[0] for desc in description]
                     trx_dlp_result.columns = colnames
-                    trx_dlp_result.rename(columns={'tpr_ea':'ea'},inplace=True)
-                    trx_dlp_result.loc[:,'ea':] = trx_dlp_result.loc[:,'ea':].apply(pd.to_numeric)
+                    trx_dlp_result.rename(columns={'TPR_EA':'EA'},inplace=True)
+                    trx_dlp_result.loc[:,'EA':] = trx_dlp_result.loc[:,'EA':].apply(pd.to_numeric)
                     return trx_dlp_result
                 else:
                     print('These selected boring(en): ' + str(values) + \
@@ -279,7 +279,7 @@ def get_trx_dlp_result( gtm_ids ):
 # Filter on ea/strain        
 def select_on_ea( trx_result, ea = 2 ):
      if isinstance(trx_result, pd.DataFrame): 
-         new_trx_result_ea = trx_result[ ea == trx_result.ea ]
+         new_trx_result_ea = trx_result[ ea == trx_result.EA ]
          return new_trx_result_ea
      else:
          raise TypeError('No pandas dataframe was supplied')
@@ -288,10 +288,10 @@ def select_on_ea( trx_result, ea = 2 ):
 def get_average_per_ea( df_trx_result, ea = 5):
     if isinstance( df_trx_result, pd.DataFrame ):
         df_trx_temp = select_on_ea(df_trx_result, ea)
-        mean_coh = round( np.mean( df_trx_temp['coh'] ), 1 )
-        mean_fi = round( np.mean( df_trx_temp['fi'] ), 1 )
-        std_coh = round( np.std( df_trx_temp['coh'] ),1 )
-        std_fi = round( np.std( df_trx_temp['fi'] ), 1 )
+        mean_coh = round( np.mean( df_trx_temp['COH'] ), 1 )
+        mean_fi = round( np.mean( df_trx_temp['FI'] ), 1 )
+        std_coh = round( np.std( df_trx_temp['COH'] ),1 )
+        std_fi = round( np.std( df_trx_temp['FI'] ), 1 )
         N = int(len(df_trx_temp.index))
         return mean_fi,std_fi,mean_coh,std_coh,N
     else:
@@ -306,7 +306,7 @@ def get_least_squares(
     save_plot = False
     ):
     df = select_on_ea( df_trx_dlp_result, ea)
-    data_full = (df.p, df.q)
+    data_full = (df.P, df.Q)
     ### Begin Least Squares fitting van een 'linear regression'
     x, y = data_full
     N = len(x)
@@ -333,8 +333,8 @@ def get_least_squares(
 
     
     if show_plot or save_plot:
-        dlp1, dlp2, dlp3 = df[(df.deelproef_nummer == 1)], df[(df.deelproef_nummer == 2)], df[(df.deelproef_nummer == 3)]
-        data_colors = ((dlp1.p, dlp1.q, dlp1.gtm_id), (dlp2.p, dlp2.q, dlp2.gtm_id), (dlp3.p, dlp3.q, dlp3.gtm_id))
+        dlp1, dlp2, dlp3 = df[(df.DEELPROEF_NUMMER == 1)], df[(df.DEELPROEF_NUMMER == 2)], df[(df.DEELPROEF_NUMMER == 3)]
+        data_colors = ((dlp1.P, dlp1.Q, dlp1.GTM_ID), (dlp2.P, dlp2.Q, dlp2.GTM_ID), (dlp3.P, dlp3.Q, dlp3.GTM_ID))
         colors = ('red', 'green', 'blue')
         dlp_label = ('dlp 1', 'dlp 2', 'dlp 3')
 
@@ -411,8 +411,8 @@ def get_sdp( gtm_ids ):
                     sdp_df = pd.DataFrame(fetched)
                     colnames = [desc[0] for desc in description]
                     sdp_df.columns = colnames
-                    sdp_df.loc[:,'volumegewicht_droog':] = \
-                        sdp_df.loc[:,'volumegewicht_droog':].apply(pd.to_numeric)
+                    sdp_df.loc[:,'VOLUMEGEWICHT_DROOG':] = \
+                        sdp_df.loc[:,'VOLUMEGEWICHT_DROOG':].apply(pd.to_numeric)
                     return sdp_df
                 else:
                     print('These selected boring(en): ' + str(values) + \
@@ -437,8 +437,8 @@ def get_sdp_result( gtm_ids ):
                     sdp_result_df = pd.DataFrame(fetched)
                     colnames = [desc[0] for desc in description]
                     sdp_result_df.columns = colnames
-                    sdp_result_df.loc[:,'load':] = \
-                        sdp_result_df.loc[:,'load':].apply(pd.to_numeric)
+                    sdp_result_df.loc[:,'LOAD':] = \
+                        sdp_result_df.loc[:,'LOAD':].apply(pd.to_numeric)
                     return sdp_result_df
                 else:
                     print('These selected boring(en): ' + str(values) + \
@@ -473,7 +473,7 @@ def join_trx_with_trx_results( gtm_ids, proef_type = 'CD' ):
                     trx_df = pd.DataFrame(fetched)
                     colnames = [desc[0] for desc in description]
                     trx_df.columns = colnames
-                    trx_df.volumegewicht_nat = trx_df.VOLUMEGEWICHT_NAT.astype(float)
+                    trx_df.VOLUMEGEWICHT_NAT = trx_df.VOLUMEGEWICHT_NAT.astype(float)
                     return trx_df
                 else:
                     raise ValueError('These selected boring(en): ' + str(values) + ' do not contain any trx + trx_result.')

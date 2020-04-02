@@ -7,8 +7,8 @@ Summary: Base functions for qgis_frontend.py, Querying the data from the proeven
 '''
 import pandas as pd
 import numpy as np
-import psycopg2 as psy
-#import cx_Oracle as cora 
+#import psycopg2 as psy
+import cx_Oracle as cora 
 #or
 #import pyodbc as cora
 import matplotlib.pyplot as plt
@@ -17,24 +17,26 @@ import matplotlib.offsetbox as offsetbox
 # Database Connection
 def fetch (query, data):
     ## Using a PostgreSQL database
+    '''
     with psy.connect(
         host = "localhost",
         database = "bis",
         user = "",
         password = ""
         ) as dbcon:
+    '''
     ## Using an Oracle database:
-        '''
+
+    bis_dsn = cora.makedsn('sdrprod.rotterdam.local', 1521, service_name = 'PSBRBIS.ROTTERDAM.LOCAL')
     with cora.connect(
         user = "",
         password = "",
-        dsn = ""*
+        dsn = bis_dsn
             ) as dbcon:
         # *Can be a: 
         # 1. Oracle Easy Connect string
         # 2. Oracle Net Connect Descriptor string
         # 3. Net Service Name mapping to connect description
-        '''
 
         cur = dbcon.cursor()
         cur.execute(query, data)

@@ -17,15 +17,18 @@ hoogte_selectie = [100, -100] # mNAP
 proef_types = ['CU'] # ['CU','CD','UU']
 volume_gewicht_selectie = [10, 22] # kN/m3
 rek_selectie = [2] # %
-output_location = r'D:\Documents\Projects\EXCEL BIS STAT' # Example: D:\Documents\geo_parameters\'
+output_location = r''# Example: D:\documents\TRX_proeven
 output_file = 'TRX_Example.xls' # Example: TRX_example.xlsx
 show_plot = True # True/False
 save_plot = False # True/False
 
 
 import sys, os, shutil
+plugin_dir = r''
 # Change the working directory to the directory of the current script so that qgis_backend can be imported
-os.chdir(os.path.abspath(r'D:\documents\Github\proeven_verzameling'))
+os.chdir(plugin_dir)
+# Adding the same path to the python system so that qgis_backend can be imported
+sys.path.append(plugin_dir)
 
 from qgis.utils import iface
 import qgis_backend as qb

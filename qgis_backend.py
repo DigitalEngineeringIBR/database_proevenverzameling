@@ -174,8 +174,8 @@ def get_trx( gtm_ids, proef_type = ('CD') ):
                         trx_df = pd.DataFrame(fetched)
                         colnames = [desc[0] for desc in description]
                         trx_df.columns = colnames
-                        trx_df[['VOLUMEGEWICHT_DROOG','VOLUMEGEWICHT_NAT','WATERGEHALTE','TERREINSPANNING','BEZWIJKSNELHEID']] = \
-                        trx_df[['VOLUMEGEWICHT_DROOG','VOLUMEGEWICHT_NAT','WATERGEHALTE','TERREINSPANNING','BEZWIJKSNELHEID']].apply(pd.to_numeric)
+                        trx_df[['VOLUMEGEWICHT_DROOG','VOLUMEGEWICHT_NAT','WATERGEHALTE','TEREINSPANNING','BEZWIJKSNELHEID']] = \
+                        trx_df[['VOLUMEGEWICHT_DROOG','VOLUMEGEWICHT_NAT','WATERGEHALTE','TEREINSPANNING','BEZWIJKSNELHEID']].apply(pd.to_numeric)
                         trx_df.VOLUMEGEWICHT_NAT = trx_df.VOLUMEGEWICHT_NAT.astype(float)
                         return trx_df
                     else:
